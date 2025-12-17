@@ -9,12 +9,12 @@
 
 [project]
 name = "repos-cli"
-version = "0.0.1"
+version = "0.0.2"
 description = "RepOS - REPL-driven developer operating system"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "TriFactoria (Andrew Blankfield)" }]
-license = "BUSL-1.1"
+license = "LicenseRef-RepOS-BSL-1.1"
 license-files = ["LICENSE", "NOTICE"]
 
 dependencies = [
