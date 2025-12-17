@@ -33,6 +33,21 @@ jobs:
 
       - name: Verify dist metadata
         run: python -m twine check dist/*
+      
+      - name: Debug dist contents
+        run: |
+          ls -lah dist
+          python - << 'PY'
+          import glob, zipfile
+          whls = glob.glob("dist/*.whl")
+          print("Wheels:", whls)
+          for w in whls:
+            with zipfile.ZipFile(w) as z:
+              meta = [n for n in z.namelist() if n.endswith(".dist-info/METADATA")]
+              print(w, "METADATA files:", meta)
+              if meta:
+                print(z.read(meta[0]).decode("utf-8", "replace").splitlines()[:20])
+          PY
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
