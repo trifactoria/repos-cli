@@ -1,0 +1,25 @@
+# base/os.yaml
+panel: OS
+aliases:
+  - name: U
+    command: sudo apt update && sudo apt upgrade -y
+  - name: I
+    command: sudo apt install -y $1
+  - name: S
+    command: apt-cache search $1
+  - name: R
+    command: sudo apt remove -y $1
+  - name: P
+    command: sudo apt purge -y $1
+  - name: AU
+    command: sudo apt autoremove -y && sudo apt autoclean -y
+  - name: DK
+    command: sudo dpkg -i $1
+  - name: FX
+    command: sudo apt --fix-broken install -y
+  - name: CL
+    command: sudo apt-get clean
+  - name: NET
+    command: ip a && ip r
+  - name: PING
+    command: ping -c 4 $1

@@ -1,0 +1,122 @@
+Business Source License 1.1
+
+Licensor: TriFactoria (Andrew Blankfield)
+
+Licensed Work: RepOS™ — Multi-Panel REPL-Based Developer Command Environment  
+Licensed Work Version: 0.1.0  
+
+Additional Use Grant:
+You may use, modify, build, and run this software for personal use or within
+your own organization, including internal commercial development work, as long
+as you do not sell RepOS itself, do not offer RepOS or a substantially similar
+tool as a hosted service, and do not provide RepOS as a paid product to third
+parties before the Change Date. You may contribute patches, forks, or
+extensions. You may distribute your own open-source projects that integrate
+with RepOS. Providing RepOS to members of your own company or team is allowed.
+Hosting RepOS publicly as a competing service, selling RepOS, or offering a
+managed service built on RepOS is not allowed without explicit written
+permission from the Licensor.
+
+Change Date: 2029-01-01  
+Change License: Apache License, Version 2.0
+
+Additional Licensing Information
+
+This project may be subject to additional licensing terms for
+commercial use, contributions, or redistribution.
+
+See the /legal directory for:
+- Contributor License Agreements (ICLA / CCLA)
+- Commercial licensing terms
+- Licensing FAQ
+
+These documents do not modify this license unless explicitly stated.
+
+--------------------------------------------------------------------------------
+The Licensed Work is provided under the terms of this Business Source License
+Agreement ("Agreement"). Any use of the Licensed Work other than as permitted
+under this Agreement is prohibited.
+
+1. DEFINITIONS
+
+"Licensor" means the provider of the Licensed Work.
+
+"Licensed Work" means the original work of authorship made available under this
+License, including source code, documentation, configuration, and any included
+assets.
+
+"Change Date" means the date specified above on which the Change License becomes
+effective.
+
+"Change License" means the license specified above that applies to the Licensed
+Work after the Change Date.
+
+"Additional Use Grant" means the additional use grant provided above, granting
+certain rights to use the Licensed Work prior to the Change Date.
+
+2. GRANT OF RIGHTS
+
+Subject to the terms of this Agreement, the Licensor hereby grants to you the
+right to copy, modify, create derivative works, redistribute, and make
+non-production use of the Licensed Work. The Licensor may make an Additional Use
+Grant, above, permitting limited production use.
+
+You may make production use of the Licensed Work only to the degree allowed by
+the Additional Use Grant. If the Additional Use Grant does not permit your
+proposed use, production use is prohibited until the Change Date.
+
+3. LIMITATIONS
+
+The Licensed Work is not licensed for production use, except to the extent
+described above in the Additional Use Grant.
+
+You may not use the Licensed Work for a purpose that constitutes a violation of
+applicable law.
+
+You may not combine or distribute the Licensed Work with software under a
+copyleft license in a manner that would cause the Licensed Work to become
+subject to the terms of that license.
+
+4. AUTOMATIC CONVERSION
+
+On the Change Date, this Agreement automatically terminates, and the Licensed
+Work will thereafter be available under the Change License.
+
+5. DISCLAIMER OF WARRANTY
+
+THE LICENSED WORK IS PROVIDED “AS IS,” WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE LICENSOR BE
+LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE
+LICENSED WORK OR THE USE OR OTHER DEALINGS IN THE LICENSED WORK.
+
+6. LIMITATION OF LIABILITY
+
+IN NO EVENT SHALL LICENSOR’S LIABILITY ARISING OUT OF OR RELATED TO THIS
+AGREEMENT EXCEED THE GREATER OF THE AMOUNT PAID FOR THE LICENSED WORK OR ONE
+HUNDRED DOLLARS ($100). IN NO EVENT SHALL LICENSOR HAVE LIABILITY FOR ANY
+INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES, HOWEVER CAUSED AND
+BASED ON ANY THEORY OF LIABILITY, WHETHER OR NOT LICENSOR HAS BEEN ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGES.
+
+7. TERMINATION
+
+Your rights under this Agreement will terminate automatically if you fail to
+comply with any of its terms. Upon termination, you must immediately cease all
+use of the Licensed Work and destroy all copies in your possession or control.
+
+Sections 5 and 6 will survive any termination of this Agreement.
+
+8. MISCELLANEOUS
+
+This Agreement constitutes the entire agreement between the parties with respect
+to the Licensed Work. If any provision is held unenforceable, the remaining
+provisions will remain in effect and be enforceable.
+
+Any amendment or waiver of any term must be in writing and signed by the
+Licensor.
+
+The Licensed Work and any disputes arising under it shall be governed by the
+laws of the jurisdiction in which the Licensor resides, without regard to
+conflicts of law principles.

@@ -1,0 +1,27 @@
+# base/conda.yaml
+panel: C
+aliases:
+  - name: e
+    command: conda env list
+  - name: a
+    command: conda activate $1
+  - name: d
+    command: conda deactivate
+  - name: c
+    command: conda create -n $1 python=3.11 -y
+  - name: i
+    command: conda install -y $1
+  - name: I
+    command: conda install -c conda-forge -y $1
+  - name: u
+    command: conda update -y $1
+  - name: U
+    command: conda update -y --all
+  - name: r
+    command: conda env remove -n $1 -y
+  - name: x
+    command: conda env export -n $1 > environment.yaml
+  - name: X
+    command: conda env export --from-history -n $1 > environment.yaml
+  - name: cl
+    command: conda clean -a -y

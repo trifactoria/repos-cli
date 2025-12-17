@@ -1,0 +1,33 @@
+# base/python.yaml
+panel: P
+aliases:
+  - name: p
+    command: python
+  - name: v
+    command: python --version
+  - name: r
+    command: python -m $1
+  - name: t
+    command: pytest
+  - name: T
+    command: pytest -q -k "$1"
+  - name: i
+    command: pip install $1
+  - name: I
+    command: pip install -r requirements.txt
+  - name: f
+    command: pip freeze > requirements.txt
+  - name: F
+    command: pip install -e .
+  - name: l
+    command: ruff check .
+  - name: L
+    command: ruff check . --fix
+  - name: m
+    command: ruff format .
+  - name: M
+    command: ruff format . && ruff check . --fix
+  - name: ve
+    command: python -m venv .venv
+  - name: a
+    command: . .venv/bin/activate

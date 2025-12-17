@@ -1,0 +1,41 @@
+# base/git.yaml
+panel: G
+aliases:
+  - name: s
+    command: git status
+  - name: a
+    command: git add .
+  - name: aa
+    command: git add -A
+  - name: c
+    command: git commit -m "{message}"
+  - name: C
+    command: git commit --amend
+  - name: p
+    command: git push
+  - name: P
+    command: git push --force-with-lease
+  - name: l
+    command: git log --oneline --decorate --graph -n 25
+  - name: d
+    command: git diff
+  - name: D
+    command: git diff --staged
+  - name: b
+    command: git branch
+  - name: co
+    command: git checkout $1
+  - name: cm
+    command: git checkout main
+  - name: m
+    command: git merge $1
+  - name: M
+    command: git merge --no-ff $1
+  - name: r
+    command: git rebase $1
+  - name: R
+    command: git rebase --abort
+  - name: st
+    command: git stash
+  - name: sp
+    command: git stash pop

@@ -1,0 +1,31 @@
+# base/docker.yaml
+panel: D
+aliases:
+  - name: p
+    command: docker ps
+  - name: P
+    command: docker ps -a
+  - name: i
+    command: docker images
+  - name: l
+    command: docker logs -f $1
+  - name: b
+    command: docker build -t $1 .
+  - name: r
+    command: docker run --rm $1
+  - name: e
+    command: docker exec -it $1 /bin/sh
+  - name: s
+    command: docker stop $1
+  - name: R
+    command: docker rm $1
+  - name: I
+    command: docker rmi $1
+  - name: u
+    command: docker pull $1
+  - name: up
+    command: docker compose up -d
+  - name: dn
+    command: docker compose down
+  - name: PR
+    command: docker system prune

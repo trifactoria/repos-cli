@@ -1,0 +1,55 @@
+# RepOS™ — Multi-Panel REPL-Based Developer Command Environment
+# Copyright (c) 2025
+# TriFactoria (Andrew Blankfield)
+#
+# Licensed under the Business Source License 1.1 (BSL 1.1).
+# You may use, modify, and redistribute this file under the terms of the BSL.
+# On the Change Date (2029-01-01), this file will be licensed under
+# the Apache License, Version 2.0.
+
+name: CI
+
+on:
+  push:
+    branches: [ main, "claude/*" ]
+  pull_request:
+    branches: [ main, "claude/*" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest pytest-cov PyYAML
+
+      - name: Install project (editable)
+        run: |
+          pip install -e .
+
+      - name: Run tests with coverage
+        run: |
+          pytest --cov=src/repos --cov-report=term-missing --cov-report=xml --cov-report=html
+
+      - name: Upload coverage.xml
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+
+      - name: Upload HTML coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: htmlcov

@@ -1,0 +1,20 @@
+[run]
+source = src/repos_cli
+branch = True
+omit =
+    */tests/*
+    */__init__.py
+
+[report]
+show_missing = True
+skip_covered = False
+exclude_lines =
+    pragma: no cover
+    if __name__ == "__main__":
+
+[html]
+directory = htmlcov
+
+[xml]
+output = coverage.xml
+

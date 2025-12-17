@@ -1,0 +1,31 @@
+# base/node.yaml
+panel: N
+aliases:
+  - name: i
+    command: npm install
+  - name: I
+    command: npm install $1
+  - name: d
+    command: npm run dev
+  - name: t
+    command: npm test
+  - name: b
+    command: npm run build
+  - name: l
+    command: npm run lint
+  - name: f
+    command: npm run format
+  - name: r
+    command: npm run $1
+  - name: u
+    command: npm update
+  - name: U
+    command: npm update && npm audit fix
+  - name: a
+    command: npm audit
+  - name: af
+    command: npm audit fix
+  - name: v
+    command: node -v
+  - name: nv
+    command: npm -v

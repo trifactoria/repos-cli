@@ -1,0 +1,73 @@
+# RepOS™ — Multi-Panel REPL-Based Developer Command Environment
+# Copyright (c) 2025
+# TriFactoria (Andrew Blankfield)
+#
+# Licensed under the Business Source License 1.1 (BSL 1.1).
+# You may use, modify, and redistribute this file under the terms of the BSL.
+# On the Change Date (2029-01-01), this file will be licensed under
+# the Apache License, Version 2.0.
+
+[project]
+name = "repos-cli"
+version = "0.0.1"
+description = "RepOS - REPL-driven developer operating system"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [{ name = "TriFactoria (Andrew Blankfield)" }]
+dependencies = [
+  "prompt-toolkit>=3.0.0",
+  "PyYAML>=6.0.0",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Programming Language :: Python :: 3",
+  "Operating System :: POSIX :: Linux",
+  "License :: Other/Proprietary License",
+]
+
+[project.urls]
+Homepage = "https://github.com/TriFactoria/repos-cli"
+Repository = "https://github.com/TriFactoria/repos-cli"
+Issues = "https://github.com/TriFactoria/repos-cli/issues"
+
+[project.scripts]
+repos-cli = "repos_cli.cli:main"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7",
+  "build>=1",
+  "twine>=5",
+  "black>=24",
+  "ruff>=0.8",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+repos_cli = ["defaults/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E203", "E501"]

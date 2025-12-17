@@ -1,0 +1,258 @@
+# RepOS™ — Multi-Panel REPL-Based Developer Command Environment
+# Copyright (c) 2025
+# TriFactoria (Andrew Blankfield)
+#
+# Licensed under the Business Source License 1.1 (BSL 1.1).
+# You may use, modify, and redistribute this file under the terms of the BSL.
+# On the Change Date (2029-01-01), this file will be licensed under
+# the Apache License, Version 2.0.
+
+system:
+  name: RepOS
+  version: 0.1.0
+  root_panel: REP
+  switch_command: REP
+
+  welcome:
+    enabled_default: true
+    message: |
+      Welcome to RepOS!
+
+      RepOS is a multi-panel, database-backed REPL for managing your personal command 
+      environment. Store aliases per "panel" (Git, Docker, Python, etc.), switch 
+      contexts instantly, and rerun what you actually do — without scattering shell 
+      scripts across machines.
+
+      Tab: complete • Tab Tab: list aliases / REP menu  
+      Alt+0–9: switch panels • Ctrl+N/P: next/prev panel  
+      ?: help • Ctrl+L: clear • Ctrl+C: quit
+
+execution:
+  # TTY takeover mode: commands that need full terminal control
+  # Most commands use capture mode (default) to store stdout/stderr in history.
+  # Only specific apps/patterns listed here will use TTY passthrough mode.
+  tty_apps:
+    enabled: true
+
+    # Match if the first token (argv0) of resolved command is one of these
+    argv0:
+      - sudo
+      - bash
+      - sh
+      - zsh
+      - fish
+      - less
+      - more
+      - most
+      - man
+      - vim
+      - nvim
+      - nano
+      - emacs
+      - vi
+      - top
+      - htop
+      - btop
+      - watch
+      - fzf
+      - ssh
+      - tig
+      - tmux
+
+    # Match if resolved command begins with any of these prefixes
+    prefixes:
+      - "git log"
+      - "git diff"
+      - "git show"
+      - "git blame"
+
+    # Match if resolved command contains any of these substrings
+    contains:
+      - " | less"
+      - " | more"
+      - " | most"
+
+    # Raw shell override: prefix to force TTY for a single command
+    # Example: !tty ls -la (forces TTY mode even though ls normally captures)
+    force_prefix: "!tty "
+
+exit:
+  entry: ZZ
+  panel_key: Exit
+  message: "Love Ya - Bye!"
+  message_color: white
+
+ui:
+  theme:
+    style:
+      repos.panelbar: "bg:#0b0b0b #d0d0d0"
+      repos.panelbar.active: "bg:#d0d0d0 #0b0b0b bold"
+      repos.panelbar.inactive: "bg:#0b0b0b #d0d0d0"
+      repos.panelbar.sep: "bg:#0b0b0b #666666"
+
+  palette:
+    cyan: "#5f87ff"
+    pink: "#d75fd7"
+    magenta: "#af00af"
+    yellow: "#ffff00"
+    orange: "#ffa501"
+    purple: "#875faf"
+    docker_blue: "#5f87af"
+    node_green: "#00af00"
+    conda_green: "#87ffaf"
+    ruby_red: "#800000"
+
+  panelbar:
+    enabled: true
+    active_style: "class:repos.panelbar.active"
+    inactive_style: "class:repos.panelbar.inactive"
+    sep_style: "class:repos.panelbar.sep"
+
+    # Active = panel_color background + black text (or pink for REP)
+    # Inactive = dark background + panel_color text
+    per_panel:
+      REP:
+        active: "bg:#5f87ff #d75fd7 bold"
+        inactive: "bg:#d75fd7 #5f87ff"
+
+      G:
+        active: "bg:#ffa501 #000000 bold"
+        inactive: "bg:#0b0b0b #ffa501"
+
+      OS:
+        active: "bg:#875faf #000000 bold"
+        inactive: "bg:#0b0b0b #875faf"
+
+      N:
+        active: "bg:#00af00 #000000 bold"
+        inactive: "bg:#0b0b0b #00af00"
+
+      P:
+        active: "bg:#ffff00 #000000 bold"
+        inactive: "bg:#0b0b0b #ffff00"
+
+      C:
+        active: "bg:#87ffaf #000000 bold"
+        inactive: "bg:#0b0b0b #87ffaf"
+
+      D:
+        active: "bg:#5f87af #000000 bold"
+        inactive: "bg:#0b0b0b #5f87af"
+
+      R:
+        active: "bg:#800000 #ffffff bold"
+        inactive: "bg:#0b0b0b #800000"
+
+      A:
+        active: "bg:#af00af #ffffff bold"
+        inactive: "bg:#0b0b0b #af00af"
+
+      $:
+        active: "bg:#00af00 #875faf bold"
+        inactive: "bg:#875faf #00af00"
+
+  mouse:
+    enabled: true
+
+panels:
+  REP:
+    entry: REP
+    panel_color: cyan
+    caret_color: pink
+    message: "REP — your command cockpit."
+    message_color: white
+    base: null
+
+  Git:
+    entry: G
+    panel_color: orange
+    caret_color: orange
+    message: "Git - ready to commit!"
+    message_color: white
+    base: git.yaml
+
+  Python:
+    entry: P
+    message: "Python - scripts & tools"
+    panel_color: yellow
+    caret_color: yellow
+    message_color: white
+    base: python.yaml
+
+  Node:
+    entry: N
+    message: "Node - JS/TS tooling"
+    panel_color: node_green
+    caret_color: node_green
+    message_color: white
+    base: node.yaml
+
+  Ruby:
+    entry: R
+    message: "Ruby - scripts & tools"
+    panel_color: ruby_red
+    caret_color: ruby_red
+    message_color: white
+    base: ruby.yaml
+
+  Docker:
+    entry: D
+    message: "Docker - container commands"
+    panel_color: docker_blue
+    caret_color: docker_blue
+    message_color: white
+    base: docker.yaml
+
+  Conda:
+    entry: C
+    message: "Conda - env management"
+    panel_color: conda_green
+    caret_color: conda_green
+    message_color: white
+    base: conda.yaml
+
+  OS:
+    entry: OS
+    panel_color: purple
+    caret_color: purple
+    message: "OS panel - system-level aliases and helpers."
+    message_color: white
+    base: os.yaml
+
+  Term:
+    entry: $
+    panel_color: node_green
+    caret_color: purple
+    message: "Term - A normal terminal appeared!"
+    message_color: white
+    base: term.yaml
+    shell_fallback: true
+
+
+commands:
+  base:
+    list:
+      triggers: ["L", "list"]
+      description: "List aliases/entries in the current panel."
+    add:
+      triggers: ["A", "add"]
+      description: "Add/create a new alias/entry in the current panel."
+    remove:
+      triggers: ["RM", "remove", "del"]
+      description: "Remove an alias/entry from the current panel."
+    rerun:
+      triggers: ["RR", "again", "rerun"]
+      description: "Re-run the last command in the current panel."
+    history:
+      triggers: ["H"]
+      description: "Show execution history for the current panel."
+    clear:
+      triggers: ["clear"]
+      description: "Clear the screen (Ctrl+L also works)."
+    set:
+      triggers: ["SET"]
+      description: "Show or change settings (SET, SET <key> <true|false>, SET reset)."
+
+  help:
+    triggers: ["?", "h", "cmd"]
+    description: "Show base commands and how to switch panels."

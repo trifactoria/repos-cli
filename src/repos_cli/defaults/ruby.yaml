@@ -1,0 +1,25 @@
+# base/ruby.yaml
+panel: R
+aliases:
+  - name: v
+    command: ruby -v
+  - name: b
+    command: bundle install
+  - name: u
+    command: bundle update
+  - name: r
+    command: bundle exec $1
+  - name: t
+    command: bundle exec rspec
+  - name: l
+    command: bundle exec rubocop
+  - name: R
+    command: bundle exec rake
+  - name: s
+    command: rails s
+  - name: c
+    command: rails c
+  - name: db
+    command: rails db:migrate
+  - name: dbr
+    command: rails db:reset
