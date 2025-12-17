@@ -12,18 +12,20 @@ name = "repos-cli"
 version = "0.0.1"
 description = "RepOS - REPL-driven developer operating system"
 readme = "README.md"
-license = { file = "LICENSE" }
 requires-python = ">=3.10"
 authors = [{ name = "TriFactoria (Andrew Blankfield)" }]
+license = "BUSL-1.1"
+license-files = ["LICENSE", "NOTICE"]
+
 dependencies = [
   "prompt-toolkit>=3.0.0",
   "PyYAML>=6.0.0",
 ]
+
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Programming Language :: Python :: 3",
   "Operating System :: POSIX :: Linux",
-  "License :: Other/Proprietary License",
 ]
 
 [project.urls]
@@ -44,7 +46,7 @@ dev = [
 ]
 
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
