@@ -12,11 +12,14 @@ Subprocess-backed executor implementation for RepOS.
 
 This module provides:
 - run(): buffered execution (legacy / current kernel path)
-- run_stream(): streaming stdout/stderr in real time (for prompt_toolkit UI)
-- run_pty(): optional PTY execution for truly interactive commands (curses, prompts, etc.)
+- run_stream(): streaming stdout/stderr in real time
+  (for prompt_toolkit UI)
+- run_pty(): optional PTY execution for truly interactive commands
+  (curses, prompts, etc.)
 
-Kernel can continue using run() today. Later we patch kernel to use run_stream()
-(and use run_pty() for shell passthrough like '!<cmd>').
+Kernel can continue using run() today. Later we patch kernel to
+use run_stream() (and use run_pty() for shell passthrough like
+'!<cmd>').
 """
 
 from __future__ import annotations
@@ -56,14 +59,16 @@ class SubprocessExecutor:
     """Subprocess implementation of Executor protocol."""
 
     def __init__(
-        self, force_color: bool = True, timeout: int = 30, max_capture_bytes: int = 256_000
+        self, force_color: bool = True, timeout: int = 30,
+        max_capture_bytes: int = 256_000
     ):
         """Initialize executor with configuration.
 
         Args:
-            force_color: If True, set color-forcing environment variables
+            force_color: If True, set color-forcing env variables
             timeout: Command timeout in seconds (default: 30)
-            max_capture_bytes: Max bytes to keep in captured stdout/stderr buffers
+            max_capture_bytes: Max bytes to keep in captured
+                stdout/stderr buffers
         """
         self.force_color = force_color
         self.timeout = timeout
@@ -77,7 +82,9 @@ class SubprocessExecutor:
             env["CLICOLOR_FORCE"] = "1"
         return env
 
-    def run(self, command: str, cwd: str | None = None) -> tuple[int, str, str, str, int]:
+    def run(
+        self, command: str, cwd: str | None = None
+    ) -> tuple[int, str, str, str, int]:
         """Run a shell command safely and return buffered results.
 
         Args:
@@ -102,15 +109,269 @@ class SubprocessExecutor:
                 env=env,
                 cwd=cwd,
             )
-            duration_ms = int((datetime.now() - start_time).total_seconds() * 1000)
-            exit_code = 1 if result.returncode == 127 else result.returncode
-            return exit_code, result.stdout, result.stderr, started_at, duration_ms
+            duration_ms = int(
+                (datetime.now() - start_time).total_seconds() * 1000
+            )
+            exit_code = (
+                1 if result.returncode == 127 else result.returncode
+            )
+            return (
+                exit_code, result.stdout, result.stderr,
+                started_at, duration_ms
+            )
         except subprocess.TimeoutExpired:
-            duration_ms = int((datetime.now() - start_time).total_seconds() * 1000)
-            return 1, "", f"Command timed out after {self.timeout} seconds", started_at, duration_ms
+            duration_ms = int(
+                (datetime.now() - start_time).total_seconds() * 1000
+            )
+            return (
+                1, "",
+                f"Command timed out after {self.timeout} seconds",
+                started_at, duration_ms
+            )
         except Exception as e:
-            duration_ms = int((datetime.now() - start_time).total_seconds() * 1000)
-            return 1, "", f"Error executing command: {e}", started_at, duration_ms
+            duration_ms = int(
+                (datetime.now() - start_time).total_seconds() * 1000
+            )
+            return (
+                1, "", f"Error executing command: {e}",
+                started_at, duration_ms
+            )
+
+    def run_argv(
+        self, script: str, posargs: list[str] | None = None,
+        cwd: str | None = None
+    ) -> tuple[int, str, str, str, int]:
+        """Run a script with positional arguments using sh -c.
+
+        This provides proper support for $1, $2, $@, etc. by using:
+        ["/bin/sh", "-c", script, "_", arg1, arg2, ...]
+
+        Args:
+            script: Shell script to execute
+            posargs: Positional arguments (become $1, $2, etc.)
+            cwd: Working directory for the command
+
+        Returns:
+            (exit_code, stdout, stderr, started_at, duration_ms)
+        """
+        env = self._build_env()
+        started_at = datetime.now().isoformat()
+        start_time = datetime.now()
+
+        # Build argv: ["/bin/sh", "-c", script, "_", posargs...]
+        argv = ["/bin/sh", "-c", script, "_"]
+        if posargs:
+            argv.extend(posargs)
+
+        try:
+            result = subprocess.run(
+                argv,
+                capture_output=True,
+                text=True,
+                timeout=self.timeout,
+                env=env,
+                cwd=cwd,
+            )
+            duration_ms = int(
+                (datetime.now() - start_time).total_seconds() * 1000
+            )
+            exit_code = (
+                1 if result.returncode == 127 else result.returncode
+            )
+            return (
+                exit_code, result.stdout, result.stderr,
+                started_at, duration_ms
+            )
+        except subprocess.TimeoutExpired:
+            duration_ms = int(
+                (datetime.now() - start_time).total_seconds() * 1000
+            )
+            return (
+                1, "",
+                f"Command timed out after {self.timeout} seconds",
+                started_at, duration_ms
+            )
+        except Exception as e:
+            duration_ms = int(
+                (datetime.now() - start_time).total_seconds() * 1000
+            )
+            return (
+                1, "", f"Error executing command: {e}",
+                started_at, duration_ms
+            )
+
+    def run_argv_stream(
+        self,
+        script: str,
+        posargs: list[str] | None = None,
+        on_stdout: Callable[[str], None] | None = None,
+        on_stderr: Callable[[str], None] | None = None,
+        timeout: int | None = None,
+        cwd: str | None = None,
+    ) -> StreamResult:
+        """Run a script with positional arguments and stream output.
+
+        Args:
+            script: Shell script to execute
+            posargs: Positional arguments (become $1, $2, etc.)
+            on_stdout: callback for stdout lines
+            on_stderr: callback for stderr lines
+            timeout: overrides self.timeout
+            cwd: working directory
+
+        Returns:
+            StreamResult
+        """
+        env = self._build_env()
+        started_at = datetime.now().isoformat()
+        start_ts = time.time()
+
+        cap_out: list[str] = []
+        cap_err: list[str] = []
+        out_bytes = 0
+        err_bytes = 0
+        truncated = False
+
+        max_bytes = max(0, int(self.max_capture_bytes))
+        deadline = start_ts + (
+            timeout if timeout is not None else self.timeout
+        )
+
+        def _append_capped(buf: list[str], s: str, current_bytes: int) -> int:
+            nonlocal truncated
+            b = len(s.encode("utf-8", errors="replace"))
+            if max_bytes == 0:
+                truncated = True
+                return current_bytes + b
+            if current_bytes >= max_bytes:
+                truncated = True
+                return current_bytes + b
+            remaining = max_bytes - current_bytes
+            if b > remaining:
+                raw = s.encode("utf-8", errors="replace")[:remaining]
+                buf.append(raw.decode("utf-8", errors="replace"))
+                truncated = True
+                return current_bytes + b
+            buf.append(s)
+            return current_bytes + b
+
+        # Build argv: ["/bin/sh", "-c", script, "_", posargs...]
+        argv = ["/bin/sh", "-c", script, "_"]
+        if posargs:
+            argv.extend(posargs)
+
+        try:
+            proc = subprocess.Popen(
+                argv,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1,
+                env=env,
+                cwd=cwd,
+            )
+        except Exception as e:
+            duration_ms = int((time.time() - start_ts) * 1000)
+            return StreamResult(
+                exit_code=1,
+                stdout="",
+                stderr=f"Error executing command: {e}",
+                started_at=started_at,
+                duration_ms=duration_ms,
+                stdout_bytes=0,
+                stderr_bytes=0,
+                truncated=False,
+            )
+
+        assert proc.stdout is not None
+        assert proc.stderr is not None
+
+        stop_event = threading.Event()
+
+        def _reader(pipe, is_err: bool) -> None:
+            nonlocal out_bytes, err_bytes
+            try:
+                for line in iter(pipe.readline, ""):
+                    if stop_event.is_set():
+                        break
+                    if is_err:
+                        if on_stderr:
+                            on_stderr(line)
+                        err_bytes = _append_capped(cap_err, line, err_bytes)
+                    else:
+                        if on_stdout:
+                            on_stdout(line)
+                        out_bytes = _append_capped(cap_out, line, out_bytes)
+            finally:
+                try:
+                    pipe.close()
+                except Exception:
+                    pass
+
+        t_out = threading.Thread(
+            target=_reader, args=(proc.stdout, False), daemon=True
+        )
+        t_err = threading.Thread(
+            target=_reader, args=(proc.stderr, True), daemon=True
+        )
+        t_out.start()
+        t_err.start()
+
+        timed_out = False
+        try:
+            while True:
+                rc = proc.poll()
+                if rc is not None:
+                    break
+                if time.time() >= deadline:
+                    timed_out = True
+                    break
+                time.sleep(0.03)
+        finally:
+            if timed_out:
+                try:
+                    proc.terminate()
+                except Exception:
+                    pass
+                try:
+                    proc.wait(timeout=1.0)
+                except Exception:
+                    try:
+                        proc.kill()
+                    except Exception:
+                        pass
+
+            stop_event.set()
+            t_out.join(timeout=0.5)
+            t_err.join(timeout=0.5)
+
+        duration_ms = int((time.time() - start_ts) * 1000)
+
+        if timed_out:
+            timeout_val = (
+                timeout if timeout is not None else self.timeout
+            )
+            msg = f"Command timed out after {timeout_val} seconds\n"
+            if on_stderr:
+                on_stderr(msg)
+            err_bytes = _append_capped(cap_err, msg, err_bytes)
+            exit_code = 1
+        else:
+            exit_code = proc.returncode if proc.returncode is not None else 1
+
+        if exit_code == 127:
+            exit_code = 1
+
+        return StreamResult(
+            exit_code=exit_code,
+            stdout="".join(cap_out),
+            stderr="".join(cap_err),
+            started_at=started_at,
+            duration_ms=duration_ms,
+            stdout_bytes=out_bytes,
+            stderr_bytes=err_bytes,
+            truncated=truncated,
+        )
 
     def run_stream(
         self,
@@ -128,7 +389,8 @@ class SubprocessExecutor:
 
         Args:
             command: shell command
-            on_stdout: called with each stdout line (including newline if present)
+            on_stdout: called with each stdout line (including newline
+                if present)
             on_stderr: called with each stderr line
             timeout: overrides self.timeout
             cwd: working directory for the command (default: current directory)
@@ -147,7 +409,9 @@ class SubprocessExecutor:
         truncated = False
 
         max_bytes = max(0, int(self.max_capture_bytes))
-        deadline = start_ts + (timeout if timeout is not None else self.timeout)
+        deadline = start_ts + (
+            timeout if timeout is not None else self.timeout
+        )
 
         def _append_capped(buf: list[str], s: str, current_bytes: int) -> int:
             nonlocal truncated
@@ -219,8 +483,12 @@ class SubprocessExecutor:
                 except Exception:
                     pass
 
-        t_out = threading.Thread(target=_reader, args=(proc.stdout, False), daemon=True)
-        t_err = threading.Thread(target=_reader, args=(proc.stderr, True), daemon=True)
+        t_out = threading.Thread(
+            target=_reader, args=(proc.stdout, False), daemon=True
+        )
+        t_err = threading.Thread(
+            target=_reader, args=(proc.stderr, True), daemon=True
+        )
         t_out.start()
         t_err.start()
 
@@ -257,8 +525,12 @@ class SubprocessExecutor:
         duration_ms = int((time.time() - start_ts) * 1000)
 
         if timed_out:
-            # Preserve whatever we captured, but add a timeout message to stderr.
-            msg = f"Command timed out after {timeout if timeout is not None else self.timeout} seconds\n"
+            # Preserve whatever we captured, but add a timeout message
+            # to stderr.
+            timeout_val = (
+                timeout if timeout is not None else self.timeout
+            )
+            msg = f"Command timed out after {timeout_val} seconds\n"
             if on_stderr:
                 on_stderr(msg)
             err_bytes = _append_capped(cap_err, msg, err_bytes)
@@ -307,7 +579,8 @@ class SubprocessExecutor:
             cwd: working directory for the command (default: current directory)
 
         Returns:
-            StreamResult (stdout contains all captured PTY text; stderr usually empty)
+            StreamResult (stdout contains all captured PTY text;
+                stderr usually empty)
         """
         import os as _os
         import pty
@@ -321,7 +594,9 @@ class SubprocessExecutor:
         total_bytes = 0
         truncated = False
         max_bytes = max(0, int(self.max_capture_bytes))
-        deadline = start_ts + (timeout if timeout is not None else self.timeout)
+        deadline = start_ts + (
+            timeout if timeout is not None else self.timeout
+        )
 
         def _append_capped(s: str, current_bytes: int) -> int:
             nonlocal truncated
@@ -349,7 +624,8 @@ class SubprocessExecutor:
                 stderr=slave_fd,
                 env=env,
                 cwd=cwd,
-                preexec_fn=_os.setsid,  # so we can signal the whole process group
+                # So we can signal the whole process group
+                preexec_fn=_os.setsid,
             )
         except Exception as e:
             try:
@@ -440,7 +716,10 @@ class SubprocessExecutor:
         duration_ms = int((time.time() - start_ts) * 1000)
 
         if timed_out:
-            msg = f"\nCommand timed out after {timeout if timeout is not None else self.timeout} seconds\n"
+            timeout_val = (
+                timeout if timeout is not None else self.timeout
+            )
+            msg = f"\nCommand timed out after {timeout_val} seconds\n"
             if on_output:
                 on_output(msg)
             total_bytes = _append_capped(msg, total_bytes)
@@ -485,7 +764,9 @@ class SubprocessExecutor:
         started_at = datetime.now().isoformat()
         start_ts = time.time()
 
-        deadline = start_ts + (timeout if timeout is not None else self.timeout)
+        deadline = start_ts + (
+            timeout if timeout is not None else self.timeout
+        )
 
         try:
             # Run with full terminal control - inherit stdin/stdout/stderr
@@ -524,7 +805,9 @@ class SubprocessExecutor:
                         pass
                 exit_code = 1
             else:
-                exit_code = proc.returncode if proc.returncode is not None else 1
+                exit_code = (
+                    proc.returncode if proc.returncode is not None else 1
+                )
 
         except Exception:
             duration_ms = int((time.time() - start_ts) * 1000)

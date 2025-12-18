@@ -33,11 +33,11 @@ class SQLiteStore:
         """Initialize store with database path.
 
         Args:
-            db_path: Path to SQLite database file (must already have schema)
+            db_path: Path to SQLite database file (must have schema)
 
         Note:
-            Store does NOT create schema. Schema must be created by db.ensure_schema()
-            before constructing SQLiteStore.
+            Store does NOT create schema. Schema must be created by
+            db.ensure_schema() before constructing SQLiteStore.
         """
         self.db_path = db_path
 
@@ -58,7 +58,8 @@ class SQLiteStore:
             conn.execute(
                 """
                 INSERT OR REPLACE INTO aliases
-                (panel, name, alias_key, command, created_at, updated_at, is_active)
+                (panel, name, alias_key, command, created_at,
+                 updated_at, is_active)
                 VALUES (?, ?, ?, ?, ?, ?, 1)
                 """,
                 (panel, name, alias_key, command, now, now),
@@ -96,7 +97,10 @@ class SQLiteStore:
                 (panel,),
             )
             rows = cur.fetchall()
-            return [{"name": name, "command": command} for name, command in rows]
+            return [
+                {"name": name, "command": command}
+                for name, command in rows
+            ]
         finally:
             conn.close()
 
@@ -127,10 +131,11 @@ class SQLiteStore:
         started_at: str | None = None,
         duration_ms: int | None = None,
     ) -> tuple[bool, bool, int, int]:
-        """Record an execution event with output capture and truncation.
+        """Record an execution event with output capture/truncation.
 
         Returns:
-            (stdout_truncated, stderr_truncated, stdout_bytes_total, stderr_bytes_total)
+            Tuple of (stdout_truncated, stderr_truncated,
+                     stdout_bytes_total, stderr_bytes_total)
         """
         # Measure output sizes
         stdout_bytes = stdout.encode("utf-8") if stdout else b""
@@ -144,8 +149,7 @@ class SQLiteStore:
         stderr_truncated = False
 
         if total_size > MAX_TOTAL_BYTES:
-            # If total exceeds limit, prioritize stderr (keep it intact) and truncate stdout
-            # Don't apply individual stderr limit in this case
+            # If total exceeds limit, prioritize stderr and truncate stdout
             remaining_for_stdout = MAX_TOTAL_BYTES - stderr_bytes_total
             if remaining_for_stdout < stdout_bytes_total:
                 stdout_bytes = stdout_bytes[: max(0, remaining_for_stdout)]
@@ -172,8 +176,8 @@ class SQLiteStore:
             conn.execute(
                 """
                 INSERT INTO events (
-                    panel, raw_command, resolved_command, exit_code, created_at,
-                    started_at, duration_ms, stdout, stderr,
+                    panel, raw_command, resolved_command, exit_code,
+                    created_at, started_at, duration_ms, stdout, stderr,
                     stdout_bytes_total, stderr_bytes_total,
                     stdout_truncated, stderr_truncated
                 )
@@ -199,7 +203,12 @@ class SQLiteStore:
         finally:
             conn.close()
 
-        return (stdout_truncated, stderr_truncated, stdout_bytes_total, stderr_bytes_total)
+        return (
+            stdout_truncated,
+            stderr_truncated,
+            stdout_bytes_total,
+            stderr_bytes_total
+        )
 
     # ----------------------------------------------------------------
     # History retrieval
@@ -244,7 +253,11 @@ class SQLiteStore:
         finally:
             conn.close()
 
-    def get_history_detail(self, panel: str, index: int) -> dict[str, Any] | None:
+    def get_history_detail(
+        self,
+        panel: str,
+        index: int
+    ) -> dict[str, Any] | None:
         """Get detailed execution history entry by 1-indexed position."""
         conn = sqlite3.connect(str(self.db_path))
         try:

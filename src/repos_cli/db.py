@@ -116,21 +116,42 @@ def ensure_schema(db_path: Path) -> None:
             conn.execute("SELECT started_at FROM events LIMIT 1")
         except sqlite3.OperationalError:
             # Columns don't exist, add them
-            conn.execute("ALTER TABLE events ADD COLUMN started_at TEXT")
-            conn.execute("ALTER TABLE events ADD COLUMN duration_ms INTEGER")
-            conn.execute("ALTER TABLE events ADD COLUMN stdout TEXT")
-            conn.execute("ALTER TABLE events ADD COLUMN stderr TEXT")
-            conn.execute("ALTER TABLE events ADD COLUMN stdout_bytes_total INTEGER")
-            conn.execute("ALTER TABLE events ADD COLUMN stderr_bytes_total INTEGER")
-            conn.execute("ALTER TABLE events ADD COLUMN stdout_truncated INTEGER DEFAULT 0")
-            conn.execute("ALTER TABLE events ADD COLUMN stderr_truncated INTEGER DEFAULT 0")
+            conn.execute(
+                "ALTER TABLE events ADD COLUMN started_at TEXT"
+            )
+            conn.execute(
+                "ALTER TABLE events ADD COLUMN duration_ms INTEGER"
+            )
+            conn.execute(
+                "ALTER TABLE events ADD COLUMN stdout TEXT"
+            )
+            conn.execute(
+                "ALTER TABLE events ADD COLUMN stderr TEXT"
+            )
+            conn.execute(
+                "ALTER TABLE events "
+                "ADD COLUMN stdout_bytes_total INTEGER"
+            )
+            conn.execute(
+                "ALTER TABLE events "
+                "ADD COLUMN stderr_bytes_total INTEGER"
+            )
+            conn.execute(
+                "ALTER TABLE events "
+                "ADD COLUMN stdout_truncated INTEGER DEFAULT 0"
+            )
+            conn.execute(
+                "ALTER TABLE events "
+                "ADD COLUMN stderr_truncated INTEGER DEFAULT 0"
+            )
 
         # Migration: Handle projects table schema variations
         # Get current projects table schema
         cur = conn.execute("PRAGMA table_info(projects)")
         cols = {row[1] for row in cur.fetchall()}
 
-        # Check if this is a legacy projects table (has project_id but missing id)
+        # Check if this is a legacy projects table
+        # (has project_id but missing id)
         if "project_id" in cols and "id" not in cols:
             # Legacy schema: add id column
             # Create new table with correct schema
@@ -164,7 +185,8 @@ def ensure_schema(db_path: Path) -> None:
             conn.execute("DROP TABLE projects")
             conn.execute("ALTER TABLE projects_new RENAME TO projects")
 
-        # Check if this is a store-style projects table (has name/path instead of project_id/project_name)
+        # Check if this is a store-style projects table
+        # (has name/path instead of project_id/project_name)
         elif "name" in cols and "path" in cols and "project_id" not in cols:
             # Store-style schema: replace with core registry schema
             # Rename old table
@@ -184,9 +206,11 @@ def ensure_schema(db_path: Path) -> None:
                 )
                 """
             )
-            # Note: Cannot migrate data from store-style to registry style automatically
-            # because store-style doesn't have project_id or db_path
-            # Old data is preserved in projects_old table for manual recovery if needed
+            # Note: Cannot migrate data from store-style to
+            # registry style automatically because store-style
+            # doesn't have project_id or db_path.
+            # Old data is preserved in projects_old table for
+            # manual recovery if needed.
             # Drop the old table since it's incompatible
             conn.execute("DROP TABLE projects_old")
 
@@ -299,3 +323,99 @@ def update_project_location(
         conn.commit()
     finally:
         conn.close()
+
+
+def discover_project_dbs(core_db: Path) -> list[dict]:
+    """Discover all registered project databases from the core registry.
+
+    Queries the core registry and returns a list of project DB metadata.
+    Only includes projects with existing database files.
+
+    Args:
+        core_db: Path to core database
+
+    Returns:
+        List of dicts with keys: project_id, project_name, root_path, db_path
+    """
+    try:
+        conn = sqlite3.connect(str(core_db))
+        try:
+            cur = conn.execute(
+                """
+                SELECT project_id, project_name, last_known_root_path,
+                       db_path, last_used_at
+                FROM projects
+                ORDER BY project_name, last_known_root_path,
+                         last_used_at DESC
+                """
+            )
+            rows = cur.fetchall()
+        finally:
+            conn.close()
+
+        results = []
+        for (project_id, project_name, root_path,
+             db_path_str, _last_used_at) in rows:
+            # Skip broken rows or non-existent DB files
+            if not db_path_str:
+                continue
+
+            db_path = Path(db_path_str)
+            if not db_path.exists():
+                continue
+
+            results.append(
+                {
+                    "project_id": project_id,
+                    "project_name": project_name,
+                    "root_path": root_path,
+                    "db_path": db_path,
+                }
+            )
+
+        return results
+
+    except Exception:
+        # If core DB can't be read, return empty list
+        return []
+
+
+def lookup_project_metadata(
+    core_db: Path, project_db_path: Path
+) -> dict | None:
+    """Look up project metadata by database path.
+
+    Args:
+        core_db: Path to core database
+        project_db_path: Path to project database
+
+    Returns:
+        Dict with keys: project_name, root_path
+        None if not found in registry
+    """
+    try:
+        conn = sqlite3.connect(str(core_db))
+        try:
+            cur = conn.execute(
+                """
+                SELECT project_name, last_known_root_path
+                FROM projects
+                WHERE db_path = ?
+                ORDER BY last_used_at DESC
+                LIMIT 1
+                """,
+                (str(project_db_path),),
+            )
+            row = cur.fetchone()
+        finally:
+            conn.close()
+
+        if row:
+            return {
+                "project_name": row[0],
+                "root_path": row[1],
+            }
+        return None
+
+    except Exception:
+        return None

@@ -52,7 +52,8 @@ class RepoStore(Protocol):
         """Record an execution event with output capture.
 
         Returns:
-            (stdout_truncated, stderr_truncated, stdout_bytes_total, stderr_bytes_total)
+            (stdout_truncated, stderr_truncated,
+             stdout_bytes_total, stderr_bytes_total)
         """
         ...
 
@@ -60,7 +61,9 @@ class RepoStore(Protocol):
         """Get compact execution history for a panel, newest first."""
         ...
 
-    def get_history_detail(self, panel: str, index: int) -> dict[str, Any] | None:
+    def get_history_detail(
+        self, panel: str, index: int
+    ) -> dict[str, Any] | None:
         """Get detailed execution history entry by 1-indexed position."""
         ...
 

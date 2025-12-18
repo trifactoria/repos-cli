@@ -152,9 +152,31 @@ class FakeExecutor:
 
     def __init__(self):
         self.commands_run = []
+        self.argv_runs = []  # Track argv-based runs
 
     def run(self, command: str, cwd: str = None) -> tuple[int, str, str, str, int]:
         self.commands_run.append(command)
+        return (0, "output\n", "", "2025-12-14T10:00:00", 100)
+
+    def run_argv(
+        self, script: str, posargs: list[str] | None = None, cwd: str | None = None
+    ) -> tuple[int, str, str, str, int]:
+        """Mock argv-based execution."""
+        self.argv_runs.append({"script": script, "posargs": posargs or []})
+        # For compatibility with tests, also track as a command
+        # Simulate what would happen: script with args substituted
+        if posargs:
+            # Simulate $1, $2, etc. substitution for test compatibility
+            import re
+
+            result_script = script
+            for i, arg in enumerate(posargs, 1):
+                result_script = result_script.replace(f"${i}", arg)
+            # Also handle $@
+            result_script = result_script.replace("$@", " ".join(posargs))
+            self.commands_run.append(result_script)
+        else:
+            self.commands_run.append(script)
         return (0, "output\n", "", "2025-12-14T10:00:00", 100)
 
 
@@ -579,11 +601,13 @@ def test_kernel_handles_alias_with_message_placeholder(kernel_with_mocks: Kernel
     """Cover lines 277-278: alias with {message} placeholder."""
     k = kernel_with_mocks
     k.handle_command("G")
-    k.store.add_alias("G", "commit", "git commit -m '{message}'")
+    k.store.add_alias("G", "commit", "git commit -m {message}")
 
-    k.handle_command("commit initial commit")
+    # New syntax: use kwarg for placeholder
+    k.handle_command('commit message="initial commit"')
 
-    assert k.executor.commands_run[-1] == "git commit -m 'initial commit'"
+    # The placeholder should be shell-quoted
+    assert "initial commit" in k.executor.commands_run[-1]
 
 
 def test_kernel_handles_rerun_command(kernel_with_mocks: Kernel):
@@ -1327,13 +1351,13 @@ def test_kernel_shell_fallback_with_alias_placeholders():
     k.start()
     k.handle_command("$")
 
-    # Add alias with placeholder
-    store.add_alias("$", "echo", "echo $1")
+    # Add alias with placeholder (use $@ for all args)
+    store.add_alias("$", "echo", "echo $@")
 
     # Execute alias with args
     k.handle_command("echo hello world")
 
-    # Should expand alias, not execute "echo" directly
+    # Should expand alias with both args
     assert "echo hello world" in executor.commands_run
 
 

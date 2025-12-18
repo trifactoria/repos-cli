@@ -138,7 +138,9 @@ class ExecutableCompleter(Completer):
         self._cache_path = path_val
         return exes
 
-    def get_completions(self, document, complete_event) -> Iterable[Completion]:
+    def get_completions(
+        self, document, complete_event
+    ) -> Iterable[Completion]:
         text = document.text or ""
         stripped = text.lstrip()
         if not stripped.startswith("!"):
@@ -155,7 +157,9 @@ class ExecutableCompleter(Completer):
         token = after
         for exe in sorted(self._load()):
             if exe.startswith(token):
-                yield Completion(exe, start_position=-len(token), display_meta="exe")
+                yield Completion(
+                    exe, start_position=-len(token), display_meta="exe"
+                )
 
 
 class PathCompleter(Completer):
@@ -220,7 +224,9 @@ class PathCompleter(Completer):
             complete_event: The completion event
             require_bang: If True, only complete on lines starting with !
         """
-        token, replace_len = self._current_arg_token(document.text or "", require_bang=require_bang)
+        token, replace_len = self._current_arg_token(
+            document.text or "", require_bang=require_bang
+        )
         if token is None:
             return
 
@@ -252,17 +258,26 @@ class PathCompleter(Completer):
             is_dir = os.path.isdir(full)
             ins = f"{insert_prefix}{name}" + ("/" if is_dir else "")
             meta = "dir" if is_dir else "file"
-            yield Completion(ins, start_position=-replace_len, display_meta=meta)
+            yield Completion(
+                ins, start_position=-replace_len, display_meta=meta
+            )
 
 
 class BangArgCompleter(Completer):
-    """Filesystem path completion for bang-mode arguments (after the command token)."""
+    """Filesystem path completion for bang-mode arguments.
+
+    Completes after the command token.
+    """
 
     def __init__(self) -> None:
         self._path_completer = PathCompleter()
 
-    def get_completions(self, document, complete_event) -> Iterable[Completion]:
-        yield from self._path_completer.get_completions(document, complete_event, require_bang=True)
+    def get_completions(
+        self, document, complete_event
+    ) -> Iterable[Completion]:
+        yield from self._path_completer.get_completions(
+            document, complete_event, require_bang=True
+        )
 
 
 # ----------------------------
@@ -276,7 +291,9 @@ class ReposCompleter(Completer):
         self._exe = ExecutableCompleter()
         self._path = PathCompleter()
         self._bang_args = BangArgCompleter()
-        self._bang = merge_completers([self._exe, self._bang_args])
+        self._bang = merge_completers(
+            [self._exe, self._bang_args]
+        )
 
     def _get_alias_items(self) -> list[AliasCompletionItem]:
         k = self.kernel
@@ -289,23 +306,31 @@ class ReposCompleter(Completer):
                 for r in raw or []:
                     if isinstance(r, dict):
                         key = str(r.get("key", "")).strip()
-                        expanded = str(r.get("expanded", "")).strip()
+                        expanded = str(
+                            r.get("expanded", "")
+                        ).strip()
                         if key:
-                            items.append(AliasCompletionItem(key=key, expanded=expanded))
+                            items.append(
+                                AliasCompletionItem(
+                                    key=key, expanded=expanded
+                                )
+                            )
                 return items
             except Exception:
                 return []
         return []
 
     def _first_token_before_cursor(self, text_before_cursor: str) -> str:
-        """
-        Return the first token (up to first whitespace) from the start of the line.
-        If the cursor is past the first token (i.e. there is any whitespace),
-        return "" so we don't suggest aliases for arguments.
+        """Return the first token from the start of the line.
+
+        Up to first whitespace. If cursor is past first token
+        (i.e. there is whitespace), return "" so we don't suggest
+        aliases for arguments.
         """
         s = text_before_cursor.lstrip()
 
-        # If user already typed whitespace after the first token, we're in args → no alias completion.
+        # If user already typed whitespace after the first token,
+        # we're in args → no alias completion.
         # e.g. "ec m" or "b && ..." (v1.0 doesn't do chaining)
         if " " in s:
             return ""
@@ -324,13 +349,17 @@ class ReposCompleter(Completer):
                 return False
         return False
 
-    def get_completions(self, document, complete_event) -> Iterable[Completion]:
+    def get_completions(
+        self, document, complete_event
+    ) -> Iterable[Completion]:
         text = document.text or ""
         before = document.text_before_cursor or ""
 
         # Bang mode always gets shell completion
         if text.lstrip().startswith("!"):
-            yield from self._bang.get_completions(document, complete_event)
+            yield from self._bang.get_completions(
+                document, complete_event
+            )
             return
 
         # Check if we're in a shell_fallback panel
@@ -349,17 +378,23 @@ class ReposCompleter(Completer):
                         display_meta=(it.expanded or ""),
                     )
 
-            # In shell_fallback panels, also complete executables on first token
+            # In shell_fallback panels, also complete executables
+            # on first token
             if is_shell_fallback:
                 for exe in sorted(self._exe._load()):
                     if exe.startswith(token):
-                        yield Completion(exe, start_position=-len(token), display_meta="exe")
+                        yield Completion(
+                            exe, start_position=-len(token),
+                            display_meta="exe"
+                        )
             return
 
         # If we're past the first token (in arguments)
         if is_shell_fallback and " " in text.lstrip():
             # Complete paths/files in shell_fallback panels
-            yield from self._path.get_completions(document, complete_event, require_bang=False)
+            yield from self._path.get_completions(
+                document, complete_event, require_bang=False
+            )
 
 
 # ----------------------------
@@ -446,23 +481,35 @@ class PromptToolkitUI:
 
     def _toolbar_width(self) -> int:
         try:
-            if self.session and self.session.app and self.session.app.output:
-                return int(self.session.app.output.get_size().columns)
+            if (self.session and self.session.app and
+                    self.session.app.output):
+                return int(
+                    self.session.app.output.get_size().columns
+                )
         except Exception:
             pass
         return 120
 
     def _panelbar_style_defaults(self) -> tuple[str, str, str]:
-        active = _cfg_str(self.kernel, "ui.panelbar.active_style", "class:repos.panelbar.active")
-        inactive = _cfg_str(
-            self.kernel, "ui.panelbar.inactive_style", "class:repos.panelbar.inactive"
+        active = _cfg_str(
+            self.kernel, "ui.panelbar.active_style",
+            "class:repos.panelbar.active"
         )
-        sep = _cfg_str(self.kernel, "ui.panelbar.sep_style", "class:repos.panelbar.sep")
+        inactive = _cfg_str(
+            self.kernel, "ui.panelbar.inactive_style",
+            "class:repos.panelbar.inactive"
+        )
+        sep = _cfg_str(
+            self.kernel, "ui.panelbar.sep_style",
+            "class:repos.panelbar.sep"
+        )
         return (active, inactive, sep)
 
     def _panelbar_style_for(self, entry: str, is_active: bool) -> str:
         key = "active" if is_active else "inactive"
-        v = _cfg_str(self.kernel, f"ui.panelbar.per_panel.{entry}.{key}", "").strip()
+        v = _cfg_str(
+            self.kernel, f"ui.panelbar.per_panel.{entry}.{key}", ""
+        ).strip()
         if v:
             return v
         active, inactive, _sep = self._panelbar_style_defaults()
@@ -492,7 +539,7 @@ class PromptToolkitUI:
                 if used >= width:
                     break
 
-            # hard truncate tokens that cannot fit on a line at all
+            # hard truncate tokens that cannot fit on a line
             if len(text) > width:
                 text = text[:width]
 
@@ -508,7 +555,9 @@ class PromptToolkitUI:
 
         return lines
 
-    def _build_panelbar_tokens(self, width: int) -> list[list[tuple[str, str]]]:
+    def _build_panelbar_tokens(
+        self, width: int
+    ) -> list[list[tuple[str, str]]]:
         if not _cfg_bool(self.kernel, "ui.panelbar.enabled", True):
             return []
 
@@ -521,12 +570,16 @@ class PromptToolkitUI:
         tokens: list[tuple[str, str]] = []
         max_show = min(len(self._panels), 10)
         for i, (name, entry) in enumerate(self._panels[:max_show]):
-            style = self._panelbar_style_for(entry, is_active=(entry == current))
+            style = self._panelbar_style_for(
+                entry, is_active=(entry == current)
+            )
             tokens.append((style, f"{i}•{name} "))
             if i != max_show - 1:
                 tokens.append((sep_style, "|"))
 
-        return self._wrap_tokens(tokens, width=width, max_lines=3)
+        return self._wrap_tokens(
+            tokens, width=width, max_lines=3
+        )
 
     def _build_aliasbar_tokens(self) -> list[tuple[str, str]]:
         if not _cfg_bool(self.kernel, "ui.toolbar.enabled", True):
@@ -543,7 +596,8 @@ class PromptToolkitUI:
         if not s or s.startswith("!"):
             return []
 
-        # v1.0: always preview the FIRST token, even after spaces (persist while typing args)
+        # v1.0: always preview the FIRST token, even after spaces
+        # (persist while typing args)
         first = s.split(maxsplit=1)[0].strip()
         if not first:
             return []
@@ -588,7 +642,9 @@ class PromptToolkitUI:
             if out:
                 out.append(("class:repos.panelbar", "\n"))
             for li, line in enumerate(panel_lines):
-                out.extend(line if line else [("class:repos.panelbar", "")])
+                out.extend(
+                    line if line else [("class:repos.panelbar", "")]
+                )
                 if li != len(panel_lines) - 1:
                     out.append(("class:repos.panelbar", "\n"))
 
@@ -600,7 +656,10 @@ class PromptToolkitUI:
         if self.session is not None:
             return
 
-        key_bindings = self.build_key_bindings(self.kernel) if self.kernel else None
+        key_bindings = (
+            self.build_key_bindings(self.kernel)
+            if self.kernel else None
+        )
         self._completer = ReposCompleter(self.kernel)
 
         self.session = PromptSession(
@@ -617,17 +676,24 @@ class PromptToolkitUI:
         self._ensure_session()
         assert self.session is not None
 
-        # If last output didn't end with newline, insert one before prompt redraw
+        # If last output didn't end with newline, insert one
+        # before prompt redraw
         if self._needs_newline_before_prompt:
-            print_formatted_text(ANSI("\n"), style=self._style, end="")
+            print_formatted_text(
+                ANSI("\n"), style=self._style, end=""
+            )
             self._needs_newline_before_prompt = False
 
         with patch_stdout():
-            # prompt contains ANSI from kernel.prompt(), so preserve it
+            # prompt contains ANSI from kernel.prompt(),
+            # so preserve it
             return self.session.prompt(ANSI(prompt + " "))
 
     def write(self, text: str) -> None:
-        """Write EXACTLY what we receive (no extra newline), but track prompt safety."""
+        """Write EXACTLY what we receive (no extra newline).
+
+        Track prompt safety.
+        """
         if not text:
             return
         print_formatted_text(ANSI(text), style=self._style, end="")
@@ -639,9 +705,10 @@ class PromptToolkitUI:
     # ---------- TTY handoff support ----------
 
     def prepare_tty_handoff(self) -> None:
-        """Prepare for handing control to a TTY program (pager, interactive tool).
+        """Prepare for handing control to a TTY program.
 
-        Ensures clean visual transition by printing a newline if needed.
+        Works with pager or interactive tool. Ensures clean visual
+        transition by printing a newline if needed.
         """
         # If previous output didn't end with newline, add one now
         # This prevents the TTY program from starting on the same line
@@ -714,7 +781,8 @@ class PromptToolkitUI:
             cursor_at_end = buf.cursor_position == len(text)
 
             # Detect double-tab
-            if now - self._last_tab_time < 0.5 and text == self._last_tab_text and cursor_at_end:
+            if (now - self._last_tab_time < 0.5 and
+                    text == self._last_tab_text and cursor_at_end):
                 # In REP panel: show REP menu via "?"
                 # In other panels: show alias list via "L"
                 if kernel.panel == "REP":

@@ -644,3 +644,147 @@ def test_cli_repos_init_does_not_prompt_for_seeding_choices(
     monkeypatch.setattr(cli, "run_repl", lambda *args, **kwargs: None, raising=True)
 
     cli.main()
+
+
+# -------------------------------------------------------------------
+# A command continuation tests
+# -------------------------------------------------------------------
+
+
+def test_alias_continuation_with_trailing_backslash(monkeypatch: pytest.MonkeyPatch) -> None:
+    """
+    Test that alias creation continues when line ends with backslash.
+
+    Input:
+      A e echo "this is a \
+      test"
+
+    Expected: Alias 'e' is created with body: echo "this is a \ntest"
+    """
+    k = make_kernel()
+    k.running = True
+    monkeypatch.setattr(k, "prompt", lambda: "G>")
+
+    # Simulate user input with continuation
+    ui = FakeUI(inputs=[
+        'G',                       # Switch to Git panel (supports aliases)
+        'A e echo "this is a \\',  # Trailing backslash
+        'test"',                   # Continuation line
+        "ZZ"                       # Exit
+    ])
+
+    cli.run_repl(k, ui=ui)
+
+    # Check that alias was created with newline in body
+    alias_body = k.store.find_alias("G", "e")
+    assert alias_body is not None
+    assert 'echo "this is a \\\ntest"' == alias_body
+
+
+def test_alias_continuation_with_unbalanced_quotes(monkeypatch: pytest.MonkeyPatch) -> None:
+    """
+    Test that alias creation continues when quotes are unbalanced.
+
+    Input:
+      A e printf "%s\n" "a
+      b"
+
+    Expected: Alias 'e' is created with body containing newline
+    """
+    k = make_kernel()
+    k.running = True
+    monkeypatch.setattr(k, "prompt", lambda: "G>")
+
+    ui = FakeUI(inputs=[
+        'G',                       # Switch to Git panel (supports aliases)
+        'A e printf "%s\\n" "a',  # Unbalanced quote
+        'b"',                      # Closing quote
+        "ZZ"                       # Exit
+    ])
+
+    cli.run_repl(k, ui=ui)
+
+    # Check that alias was created with newline in body
+    alias_body = k.store.find_alias("G", "e")
+    assert alias_body is not None
+    assert 'printf "%s\\n" "a\nb"' == alias_body
+
+
+def test_alias_no_continuation_when_complete(monkeypatch: pytest.MonkeyPatch) -> None:
+    """
+    Test that alias creation does NOT continue when input is complete.
+
+    Input:
+      A e echo "ok"
+
+    Expected: Alias 'e' is created immediately without continuation
+    """
+    k = make_kernel()
+    k.running = True
+    monkeypatch.setattr(k, "prompt", lambda: "G>")
+
+    ui = FakeUI(inputs=[
+        'G',              # Switch to Git panel (supports aliases)
+        'A e echo "ok"',  # Complete command
+        "ZZ"              # Exit
+    ])
+
+    cli.run_repl(k, ui=ui)
+
+    # Check that alias was created
+    alias_body = k.store.find_alias("G", "e")
+    assert alias_body is not None
+    assert alias_body == 'echo "ok"'
+
+    # Verify continuation prompt was NOT shown (only 3 prompts: G switch, alias, ZZ)
+    assert len([p for p in ui.prompts if "G>" in p or "REP>" in p]) == 3
+    assert len([p for p in ui.prompts if p.startswith("...")]) == 0
+
+
+def test_alias_continuation_abort_with_ctrl_d(monkeypatch: pytest.MonkeyPatch) -> None:
+    """
+    Test that pressing Ctrl-D during continuation aborts without saving.
+
+    Input:
+      A e echo "incomplete
+      <Ctrl-D>
+
+    Expected: No alias 'e' is created
+    """
+    k = make_kernel()
+    k.running = True
+    monkeypatch.setattr(k, "prompt", lambda: "G>")
+
+    # Use a custom UI that raises EOFError on second read
+    class ContinuationAbortUI(FakeUI):
+        def __init__(self):
+            super().__init__(inputs=[])
+            self.read_count = 0
+
+        def read(self, prompt: str) -> str:
+            self.prompts.append(prompt)
+            self.read_count += 1
+
+            if self.read_count == 1:
+                # First read: switch to G panel
+                return 'G'
+            elif self.read_count == 2:
+                # Second read: incomplete alias command
+                return 'A e echo "incomplete'
+            elif self.read_count == 3:
+                # Third read (continuation): simulate Ctrl-D
+                raise EOFError
+            else:
+                # Fourth read would be normal prompt, exit
+                k.running = False
+                return "ZZ"
+
+    ui = ContinuationAbortUI()
+    cli.run_repl(k, ui=ui)
+
+    # Check that alias was NOT created
+    alias_body = k.store.find_alias("G", "e")
+    assert alias_body is None
+
+    # Verify [Cancelled] message was shown
+    assert any("[Cancelled]" in output for output in ui.outputs)

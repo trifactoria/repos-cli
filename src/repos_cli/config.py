@@ -164,9 +164,84 @@ def core_db_path(data_root: Path) -> Path:
     return data_root / "repos" / "core.db"
 
 
-def project_db_path(data_root: Path, project_id: str) -> Path:
-    """<data_root>/repos/db/<project_id>.db"""
-    return data_root / "repos" / "db" / f"{project_id}.db"
+def slugify(text: str) -> str:
+    """Convert text to a URL-safe slug.
+
+    Rules:
+    - lowercase
+    - replace any non [a-z0-9] with '-'
+    - collapse multiple '-'
+    - trim leading/trailing '-'
+    - if empty after slugify, use "project"
+
+    Args:
+        text: Input text to slugify
+
+    Returns:
+        Slugified string
+    """
+    import re
+
+    # Convert to lowercase
+    slug = text.lower()
+
+    # Replace any non-alphanumeric with hyphen
+    slug = re.sub(r"[^a-z0-9]+", "-", slug)
+
+    # Collapse multiple hyphens
+    slug = re.sub(r"-+", "-", slug)
+
+    # Trim leading/trailing hyphens
+    slug = slug.strip("-")
+
+    # Fallback to "project" if empty
+    if not slug:
+        slug = "project"
+
+    return slug
+
+
+def make_project_db_filename(project_name: str, project_id: str) -> str:
+    """Create a human-readable project database filename.
+
+    Format: {slug(project_name)}-{project_id}.db
+
+    Args:
+        project_name: Human-readable project name
+        project_id: Unique project identifier (typically 8-char hex)
+
+    Returns:
+        Filename string (e.g., "rep-os-b7881729.db")
+    """
+    slug = slugify(project_name)
+    return f"{slug}-{project_id}.db"
+
+
+def project_db_path(
+    data_root: Path, project_id: str, project_name: str | None = None
+) -> Path:
+    """Get the path to a project database.
+
+    If project_name is provided, uses new naming convention: {slug}-{id}.db
+    If project_name is None, uses legacy naming: {id}.db
+
+    Args:
+        data_root: Root data directory
+        project_id: Unique project identifier
+        project_name: Optional project name for human-readable filenames
+
+    Returns:
+        Path to project database file
+    """
+    db_dir = data_root / "repos" / "db"
+
+    if project_name is not None:
+        filename = make_project_db_filename(project_name, project_id)
+    else:
+        # Legacy naming for backward compatibility
+        filename = f"{project_id}.db"
+
+    return db_dir / filename
 
 
 def find_project_root(cwd: Path) -> Path | None:
@@ -212,10 +287,13 @@ def resolve_repos_data_home(cfg: dict, project_root: Path) -> Path | None:
 
 
 def _defaults_dir() -> Path:
+    """Return the installed path to packaged defaults directory.
+
+    Looks in repos/defaults.
     """
-    Return the installed path to the packaged defaults directory (repos/defaults).
-    """
-    return Path(importlib_resources.files("repos_cli.defaults"))  # type: ignore[arg-type]
+    return Path(
+        importlib_resources.files("repos_cli.defaults")
+    )  # type: ignore[arg-type]
 
 
 def load_defaults_yaml(filename: str) -> dict[str, Any]:
@@ -225,13 +303,18 @@ def load_defaults_yaml(filename: str) -> dict[str, Any]:
     defaults_dir = _defaults_dir()
     path = defaults_dir / filename
     if not path.exists():
-        raise FileNotFoundError(f"Missing defaults YAML: {filename} (looked in {defaults_dir})")
+        raise FileNotFoundError(
+            f"Missing defaults YAML: {filename} "
+            f"(looked in {defaults_dir})"
+        )
 
     with path.open("r", encoding="utf-8") as f:
         data = yaml.safe_load(f) or {}
 
     if not isinstance(data, dict):
-        raise ValueError(f"Defaults YAML {filename} must load to a mapping/dict.")
+        raise ValueError(
+            f"Defaults YAML {filename} must load to a mapping/dict."
+        )
     return data
 
 
@@ -258,7 +341,8 @@ def discover_profiles() -> list[str]:
 
 
 def load_profile(name: str) -> dict[str, Any]:
-    """
-    Load a profile yaml by stem name from repos/defaults (e.g. "git" -> git.yaml).
+    """Load a profile yaml by stem name from repos/defaults.
+
+    E.g. "git" -> git.yaml
     """
     return load_defaults_yaml(f"{name}.yaml")

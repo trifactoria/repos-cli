@@ -13,4 +13,4 @@ RepOS core package.
 The implementation in this bootstrap is intentionally minimal. The test suite
 in ``tests/`` defines the behavior that must be implemented.
 """
-from .kernel import Kernel as Kernel  # re-export for convenience
+from .kernel import Kernel as Kernel  # noqa: F401 (re-export)

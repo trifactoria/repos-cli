@@ -65,8 +65,19 @@ def core_db_path(repos_data_home: Path) -> Path:
     return repos_data_home / "repos" / "core.db"
 
 
-def project_db_path(repos_data_home: Path, project_id: str) -> Path:
-    return repos_data_home / "repos" / "db" / f"{project_id}.db"
+def project_db_path(repos_data_home: Path, project_id: str, project_name: str | None = None) -> Path:
+    """Generate project DB path matching the main config module."""
+    from repos_cli.config import make_project_db_filename
+
+    db_dir = repos_data_home / "repos" / "db"
+
+    if project_name is not None:
+        filename = make_project_db_filename(project_name, project_id)
+    else:
+        # Legacy naming
+        filename = f"{project_id}.db"
+
+    return db_dir / filename
 
 
 def load_json(path: Path) -> dict:
@@ -269,7 +280,7 @@ def test_project_db_resolved_from_repos_file(
 
     db_path = ensure_active_db(cwd=nested_dir)
 
-    expected = project_db_path(repos_data_home, payload["project_id"])
+    expected = project_db_path(repos_data_home, payload["project_id"], payload["project_name"])
     assert db_path == expected
     assert expected.exists()
 
@@ -308,7 +319,12 @@ def test_repos_init_creates_project_db_in_central_store(
     interviewer = FakeIOInterviewer(mode_choice="2", confirm=True)  # blank
     project_id, db_path = init_project(cwd=project_dir, interviewer=interviewer)
 
-    expected = project_db_path(repos_data_home, project_id)
+    # Read .repos file to get project_name
+    repos_file = project_dir / ".repos"
+    payload = load_json(repos_file)
+    project_name = payload["project_name"]
+
+    expected = project_db_path(repos_data_home, project_id, project_name)
     assert db_path == expected
     assert expected.exists()
 
