@@ -40,7 +40,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          pytest --cov=src/repos --cov-report=term-missing --cov-report=xml --cov-report=html
+          pytest --cov=src/repos_cli --cov-report=term-missing --cov-report=xml --cov-report=html
 
       - name: Upload coverage.xml
         uses: actions/upload-artifact@v4
