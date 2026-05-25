@@ -13,6 +13,7 @@ Tests cover:
 """
 
 import pytest
+
 from repos_cli.executor import SubprocessExecutor
 from repos_cli.kernel import Kernel
 from repos_cli.store import SQLiteStore
@@ -92,7 +93,7 @@ def test_is_quote_balanced_nested():
     """Test quote balance with mixed quotes."""
     assert is_quote_balanced('''echo "it's fine"''')
     assert is_quote_balanced("""echo 'he said "hello"'""")
-    assert not is_quote_balanced('''echo "it's''')
+    assert not is_quote_balanced("""echo "it's""")
 
 
 def test_is_quote_balanced_escapes():
@@ -223,8 +224,8 @@ def test_parse_alias_script_quote_aware():
 
     assert len(segments) == 1
     assert segments[0].type == "literal"
-    assert '@s' in segments[0].content
-    assert '@b' in segments[0].content
+    assert "@s" in segments[0].content
+    assert "@b" in segments[0].content
 
 
 def test_parse_alias_script_semicolon_separated():
@@ -302,7 +303,7 @@ def test_alias_mixed_kwargs_posargs(kernel):
     """Test C) Mixed kwargs and positional args."""
     kernel.store.add_alias("G", "mix", 'echo {message}; echo "$1"; echo "$2"')
 
-    result = kernel.handle_command('mix message=hi a b')
+    result = kernel.handle_command("mix message=hi a b")
 
     assert "hi" in result
     assert "a" in result
@@ -482,7 +483,6 @@ def test_alias_preserves_backslash_escapes(kernel):
     result = kernel.handle_command("e")
 
     # Should output a and b on separate lines
-    lines = [line for line in result.split('\n') if line and not line.startswith('[')]
     assert "a" in result
     assert "b" in result
 

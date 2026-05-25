@@ -15,6 +15,10 @@ Developer command workflows often start as a few shell aliases, then spread acro
 
 RepOS is not meant to replace Bash, Zsh, Fish, or your terminal. It is a command layer that helps organize and rerun the shell commands you already use.
 
+## Why RepOS instead of aliases/dotfiles?
+
+Aliases and dotfiles are still useful, but they become hard to scan once they are spread across shell profiles, project notes, and machine-specific setup. RepOS gives those same commands a persistent local home with panel context, SQLite history, and project-level scope when a workflow belongs to one repo instead of every shell session.
+
 ## Installation
 
 ```bash
@@ -46,6 +50,35 @@ Exit at any time with:
 ```text
 ZZ
 ```
+
+## Screenshots and Demo
+
+Current terminal screenshot:
+
+![RepOS terminal interface](screenshots/repos-cli-terminal.png)
+
+The same image is also used by the landing-page repository:
+
+- `repos-landing/screenshots/repos-cli-terminal.png`
+
+### Asciinema demo placeholder
+
+No Asciinema demo cast is committed yet. A terminal recording will make the basic flow easier to evaluate from the README. To add one later:
+
+1. Install Asciinema: `pipx install asciinema` or use your system package manager.
+2. Record a short session from a clean test directory:
+
+   ```bash
+   asciinema rec docs/demo.cast
+   ```
+
+3. In the recording, show `repos-cli`, switch to a panel, list aliases, run a harmless alias, add one project-specific alias, and exit with `ZZ`.
+4. Upload the cast to asciinema.org or commit `docs/demo.cast` if the project should keep the raw recording.
+5. Replace this placeholder with an embedded badge or link:
+
+   ```markdown
+   [![asciicast](https://asciinema.org/a/CAST_ID.svg)](https://asciinema.org/a/CAST_ID)
+   ```
 
 ## Example session
 

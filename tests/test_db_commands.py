@@ -19,14 +19,9 @@ Validates:
 
 from __future__ import annotations
 
-import sqlite3
-import tempfile
-from pathlib import Path
-
 import pytest
 
 from repos_cli import db as db_module
-from repos_cli.config import core_db_path, get_data_root
 from repos_cli.kernel import Kernel
 from repos_cli.store import SQLiteStore
 
@@ -59,6 +54,7 @@ class FakeConfig:
 @pytest.fixture
 def temp_core_db(tmp_path, monkeypatch):
     """Create a temporary core database for testing."""
+
     # Mock get_data_root and core_db_path to return tmp_path
     def mock_get_data_root():
         return tmp_path
@@ -357,8 +353,6 @@ def test_info_includes_path(temp_core_db, tmp_path):
 
 def test_unknown_db_fallback_shows_project_unknown(temp_core_db, tmp_path):
     """If project DB is not in registry, should show 'project/unknown' not 'project/project'."""
-    core_path = temp_core_db
-
     # Create a project DB that's NOT registered in core
     unknown_db = tmp_path / "repos" / "db" / "unknown.db"
     unknown_db.parent.mkdir(parents=True, exist_ok=True)
@@ -377,7 +371,7 @@ def test_unknown_db_fallback_shows_project_unknown(temp_core_db, tmp_path):
 
 def test_slugify_and_make_project_db_filename(tmp_path):
     """Test slug generation and filename creation."""
-    from repos_cli.config import slugify, make_project_db_filename
+    from repos_cli.config import make_project_db_filename, slugify
 
     # Test slugify with various inputs
     assert slugify("rep-os") == "rep-os"
@@ -398,8 +392,6 @@ def test_new_project_uses_readable_filename(temp_core_db, tmp_path, monkeypatch)
     """New projects should create DB files with human-readable names."""
     from repos_cli import config as cfg_module
 
-    core_path = temp_core_db
-
     # Create a new project DB path with project name
     project_id = "b7881729"
     project_name = "rep-os"
@@ -414,8 +406,6 @@ def test_new_project_uses_readable_filename(temp_core_db, tmp_path, monkeypatch)
 def test_legacy_project_path_without_name(temp_core_db, tmp_path):
     """Legacy project paths (without name) should still work."""
     from repos_cli import config as cfg_module
-
-    core_path = temp_core_db
 
     # Create a legacy project DB path without project name
     project_id = "b7881729"

@@ -97,10 +97,7 @@ class SQLiteStore:
                 (panel,),
             )
             rows = cur.fetchall()
-            return [
-                {"name": name, "command": command}
-                for name, command in rows
-            ]
+            return [{"name": name, "command": command} for name, command in rows]
         finally:
             conn.close()
 
@@ -203,12 +200,7 @@ class SQLiteStore:
         finally:
             conn.close()
 
-        return (
-            stdout_truncated,
-            stderr_truncated,
-            stdout_bytes_total,
-            stderr_bytes_total
-        )
+        return (stdout_truncated, stderr_truncated, stdout_bytes_total, stderr_bytes_total)
 
     # ----------------------------------------------------------------
     # History retrieval
@@ -253,11 +245,7 @@ class SQLiteStore:
         finally:
             conn.close()
 
-    def get_history_detail(
-        self,
-        panel: str,
-        index: int
-    ) -> dict[str, Any] | None:
+    def get_history_detail(self, panel: str, index: int) -> dict[str, Any] | None:
         """Get detailed execution history entry by 1-indexed position."""
         conn = sqlite3.connect(str(self.db_path))
         try:

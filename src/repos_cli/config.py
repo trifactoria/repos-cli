@@ -217,9 +217,7 @@ def make_project_db_filename(project_name: str, project_id: str) -> str:
     return f"{slug}-{project_id}.db"
 
 
-def project_db_path(
-    data_root: Path, project_id: str, project_name: str | None = None
-) -> Path:
+def project_db_path(data_root: Path, project_id: str, project_name: str | None = None) -> Path:
     """Get the path to a project database.
 
     If project_name is provided, uses new naming convention: {slug}-{id}.db
@@ -291,9 +289,7 @@ def _defaults_dir() -> Path:
 
     Looks in repos/defaults.
     """
-    return Path(
-        importlib_resources.files("repos_cli.defaults")
-    )  # type: ignore[arg-type]
+    return Path(importlib_resources.files("repos_cli.defaults"))  # type: ignore[arg-type]
 
 
 def load_defaults_yaml(filename: str) -> dict[str, Any]:
@@ -303,18 +299,13 @@ def load_defaults_yaml(filename: str) -> dict[str, Any]:
     defaults_dir = _defaults_dir()
     path = defaults_dir / filename
     if not path.exists():
-        raise FileNotFoundError(
-            f"Missing defaults YAML: {filename} "
-            f"(looked in {defaults_dir})"
-        )
+        raise FileNotFoundError(f"Missing defaults YAML: {filename} " f"(looked in {defaults_dir})")
 
     with path.open("r", encoding="utf-8") as f:
         data = yaml.safe_load(f) or {}
 
     if not isinstance(data, dict):
-        raise ValueError(
-            f"Defaults YAML {filename} must load to a mapping/dict."
-        )
+        raise ValueError(f"Defaults YAML {filename} must load to a mapping/dict.")
     return data
 
 

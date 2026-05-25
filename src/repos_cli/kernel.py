@@ -128,9 +128,7 @@ class Kernel:
     documented_commands: list[str] = field(default_factory=list)
 
     # Derived maps
-    _entry_to_panel: dict[str, tuple[str, dict[str, Any]]] = field(
-        default_factory=dict
-    )
+    _entry_to_panel: dict[str, tuple[str, dict[str, Any]]] = field(default_factory=dict)
     _panel_entries: set[str] = field(default_factory=set)
 
     _last_alias_by_panel: dict[str, str] = field(default_factory=dict)
@@ -193,11 +191,7 @@ class Kernel:
         if entry_alias:
             self.documented_commands.append(entry_alias)
 
-        exit_cfg = (
-            self.config.get("exit", {})
-            if hasattr(self.config, "get")
-            else {}
-        )
+        exit_cfg = self.config.get("exit", {}) if hasattr(self.config, "get") else {}
         if isinstance(exit_cfg, dict) and exit_cfg.get("entry"):
             self.documented_commands.append(exit_cfg["entry"])
 
@@ -206,9 +200,7 @@ class Kernel:
 
         # Start in root panel entry (config-defined)
         root_panel = sys_cfg.get("root_panel", "REP")
-        self.panel = self.config.panels.get(
-            root_panel, {}
-        ).get("entry", root_panel)
+        self.panel = self.config.panels.get(root_panel, {}).get("entry", root_panel)
         self.panel_stack = [self.panel]
 
         # Initialize active DB tracking from current store
@@ -301,17 +293,13 @@ class Kernel:
         # Reset panel stack to root panel entry
         sys_cfg = getattr(self.config, "system", {}) or {}
         root_panel_key = sys_cfg.get("root_panel", "REP")
-        root_entry = self.config.panels.get(
-            root_panel_key, {}
-        ).get("entry", root_panel_key)
+        root_entry = self.config.panels.get(root_panel_key, {}).get("entry", root_panel_key)
         self.panel = root_entry
         self.panel_stack = [root_entry]
 
         # Load welcome flag from store
         welcome_value = self.store.get_setting("welcome", "true")
-        self.welcome = (
-            welcome_value.lower() in ["true", "1", "yes"]
-        )
+        self.welcome = welcome_value.lower() in ["true", "1", "yes"]
 
         out: list[str] = []
 
@@ -321,22 +309,14 @@ class Kernel:
             panel_color_name = rep_branding.get("panel_color", "cyan")
             caret_color_name = rep_branding.get("caret_color", "pink")
 
-            panel_color = ANSI_COLORS.get(
-                panel_color_name, ANSI_COLORS["cyan"]
-            )
-            caret_color = ANSI_COLORS.get(
-                caret_color_name, ANSI_COLORS["pink"]
-            )
+            panel_color = ANSI_COLORS.get(panel_color_name, ANSI_COLORS["cyan"])
+            caret_color = ANSI_COLORS.get(caret_color_name, ANSI_COLORS["pink"])
             reset = ANSI_COLORS["reset"]
             branded_repos = f"{panel_color}Rep{caret_color}OS{reset}"
 
             # 1) system-level welcome (what RepOS is) —
             # with branding applied
-            sys_welcome = (
-                (sys_cfg.get("welcome") or {})
-                if isinstance(sys_cfg, dict)
-                else {}
-            )
+            sys_welcome = (sys_cfg.get("welcome") or {}) if isinstance(sys_cfg, dict) else {}
             if isinstance(sys_welcome, dict):
                 msg = sys_welcome.get("message")
                 if isinstance(msg, str) and msg.strip():
@@ -371,9 +351,7 @@ class Kernel:
         # Clear screen behavior: config-driven triggers +
         # legacy compatibility
         clear_cfg = (
-            self.base_commands.get("clear", {})
-            if isinstance(self.base_commands, dict)
-            else {}
+            self.base_commands.get("clear", {}) if isinstance(self.base_commands, dict) else {}
         )
         clear_triggers = set(clear_cfg.get("triggers", []) or [])
         clear_triggers.update({"cls"})
@@ -392,14 +370,9 @@ class Kernel:
             return self._generate_help()
 
         # Exit entry (config-driven, default ZZ)
-        exit_cfg = (
-            self.config.get("exit", {})
-            if hasattr(self.config, "get")
-            else {}
-        )
+        exit_cfg = self.config.get("exit", {}) if hasattr(self.config, "get") else {}
         exit_entry = "ZZ"
-        if (isinstance(exit_cfg, dict) and
-                isinstance(exit_cfg.get("entry"), str)):
+        if isinstance(exit_cfg, dict) and isinstance(exit_cfg.get("entry"), str):
             exit_entry = exit_cfg["entry"]
 
         if stripped == exit_entry:
@@ -449,9 +422,7 @@ class Kernel:
         # "REP" -> go to root (entry)
         if len(parts) == 1 and parts[0] == switch_cmd:
             root_key = sys_cfg.get("root_panel", "REP")
-            root_entry = self.config.panels.get(
-                root_key, {}
-            ).get("entry", root_key)
+            root_entry = self.config.panels.get(root_key, {}).get("entry", root_key)
             self.panel = root_entry
             self.panel_stack = [root_entry]
             return ""
@@ -493,9 +464,7 @@ class Kernel:
             # Parse the invocation to extract kwargs and posargs
             invocation_args = parts[1:]  # Everything after alias name
             self._last_alias_by_panel[self.panel] = alias_name
-            return self._execute_alias_with_args(
-                alias_name, alias_cmd, invocation_args, stripped
-            )
+            return self._execute_alias_with_args(alias_name, alias_cmd, invocation_args, stripped)
 
         # Bare panel switching: typing the entry token
         if stripped in self._panel_entries:
@@ -536,20 +505,13 @@ class Kernel:
 
         parts: list[str] = []
         if stdout_truncated:
-            parts.append(
-                f"stdout {stdout_bytes_total:,}B {dim}→{reset} "
-                f"{MAX_STDOUT_BYTES:,}B"
-            )
+            parts.append(f"stdout {stdout_bytes_total:,}B {dim}→{reset} " f"{MAX_STDOUT_BYTES:,}B")
         if stderr_truncated:
-            parts.append(
-                f"stderr {stderr_bytes_total:,}B {dim}→{reset} "
-                f"{MAX_STDERR_BYTES:,}B"
-            )
+            parts.append(f"stderr {stderr_bytes_total:,}B {dim}→{reset} " f"{MAX_STDERR_BYTES:,}B")
 
         detail = ", ".join(parts)
         return (
-            f"{hist_color}[HIST]{reset} {yellow}⚠{reset} "
-            f"output not fully captured ({detail})"
+            f"{hist_color}[HIST]{reset} {yellow}⚠{reset} " f"output not fully captured ({detail})"
         )
 
     def _can_stream(self) -> bool:
@@ -568,14 +530,9 @@ class Kernel:
 
     def _can_tty(self) -> bool:
         """Check if executor supports TTY passthrough mode."""
-        return (
-            hasattr(self.executor, "run_tty") and
-            callable(self.executor.run_tty)
-        )
+        return hasattr(self.executor, "run_tty") and callable(self.executor.run_tty)
 
-    def _should_use_tty(
-        self, resolved_command: str, raw_command: str = ""
-    ) -> bool:
+    def _should_use_tty(self, resolved_command: str, raw_command: str = "") -> bool:
         """Decide if a command should use TTY passthrough.
 
         Based on YAML config.
@@ -591,15 +548,10 @@ class Kernel:
         """
         # Get TTY apps config from YAML
         exec_cfg = getattr(self.config, "execution", {}) or {}
-        tty_apps = (
-            exec_cfg.get("tty_apps", {})
-            if isinstance(exec_cfg, dict)
-            else {}
-        )
+        tty_apps = exec_cfg.get("tty_apps", {}) if isinstance(exec_cfg, dict) else {}
 
         # If disabled or missing, never use TTY
-        if (not isinstance(tty_apps, dict) or
-                not tty_apps.get("enabled", False)):
+        if not isinstance(tty_apps, dict) or not tty_apps.get("enabled", False):
             return False
 
         # Check force_prefix for raw shell commands (e.g., "!tty ls")
@@ -636,8 +588,7 @@ class Kernel:
         return False
 
     def _execute_alias_with_args(
-        self, alias_name: str, alias_script: str,
-        invocation_args: list[str], raw_command: str
+        self, alias_name: str, alias_script: str, invocation_args: list[str], raw_command: str
     ) -> str:
         """Execute an alias with argument parsing and chaining support.
 
@@ -652,7 +603,7 @@ class Kernel:
         """
         # Check recursion depth
         if len(self._alias_expansion_stack) >= self._max_alias_depth:
-            stack_str = ' -> '.join(self._alias_expansion_stack)
+            stack_str = " -> ".join(self._alias_expansion_stack)
             return (
                 f"Error: Max alias expansion depth "
                 f"({self._max_alias_depth}) exceeded. Stack: {stack_str}"
@@ -660,12 +611,8 @@ class Kernel:
 
         # Check for cycles
         if alias_name in self._alias_expansion_stack:
-            cycle_chain = " -> ".join(
-                self._alias_expansion_stack + [alias_name]
-            )
-            return (
-                f"Error: Alias expansion cycle detected: {cycle_chain}"
-            )
+            cycle_chain = " -> ".join(self._alias_expansion_stack + [alias_name])
+            return f"Error: Alias expansion cycle detected: {cycle_chain}"
 
         # Push to stack
         self._alias_expansion_stack.append(alias_name)
@@ -680,8 +627,7 @@ class Kernel:
             self._alias_expansion_stack.pop()
 
     def _execute_alias_script(
-        self, alias_name: str, alias_script: str,
-        invocation_args: list[str], raw_command: str
+        self, alias_name: str, alias_script: str, invocation_args: list[str], raw_command: str
     ) -> str:
         """Execute an alias script with kwargs/posargs and chaining support.
 
@@ -699,9 +645,7 @@ class Kernel:
 
         # Substitute placeholders in the script
         try:
-            rendered_script, _errors = substitute_placeholders(
-                alias_script, kwargs
-            )
+            rendered_script, _errors = substitute_placeholders(alias_script, kwargs)
         except ValueError as e:
             return f"Error: {e}"
 
@@ -719,8 +663,7 @@ class Kernel:
             if segment.type == "literal":
                 # Execute literal shell script with posargs
                 output = self._execute_script_segment(
-                    segment.content, posargs, raw_command,
-                    rendered_script
+                    segment.content, posargs, raw_command, rendered_script
                 )
                 outputs.append(output)
                 # TODO: track exit code if needed
@@ -730,13 +673,9 @@ class Kernel:
                 chained_args = segment.args
 
                 # Look up the alias
-                chained_script = self.store.find_alias(
-                    self.panel, chained_alias_name
-                )
+                chained_script = self.store.find_alias(self.panel, chained_alias_name)
                 if chained_script is None:
-                    outputs.append(
-                        f"Error: Alias '@{chained_alias_name}' not found"
-                    )
+                    outputs.append(f"Error: Alias '@{chained_alias_name}' not found")
                     continue
 
                 # Recursively execute
@@ -744,16 +683,14 @@ class Kernel:
                     chained_alias_name,
                     chained_script,
                     chained_args,
-                    f"@{chained_alias_name} "
-                    f"{' '.join(chained_args)}".strip(),
+                    f"@{chained_alias_name} " f"{' '.join(chained_args)}".strip(),
                 )
                 outputs.append(chained_output)
 
         return "\n".join([o for o in outputs if o])
 
     def _execute_script_segment(
-        self, script: str, posargs: list[str], raw_command: str,
-        full_resolved: str
+        self, script: str, posargs: list[str], raw_command: str, full_resolved: str
     ) -> str:
         """Execute a single script segment with positional arguments.
 
@@ -767,41 +704,33 @@ class Kernel:
             Output string
         """
         # Use argv-based execution if we have an argv method and posargs
-        has_argv_method = (
-            hasattr(self.executor, "run_argv") or
-            hasattr(self.executor, "run_argv_stream")
+        has_argv_method = hasattr(self.executor, "run_argv") or hasattr(
+            self.executor, "run_argv_stream"
         )
 
         # Prefer argv-based execution for positional arg support
         if has_argv_method and (posargs or "$" in script):
             # Use argv-based execution
-            if (self._can_stream() and
-                    hasattr(self.executor, "run_argv_stream")):
+            if self._can_stream() and hasattr(self.executor, "run_argv_stream"):
                 return self._execute_script_argv_streaming(
                     script, posargs, raw_command, full_resolved
                 )
             elif hasattr(self.executor, "run_argv"):
-                return self._execute_script_argv(
-                    script, posargs, raw_command, full_resolved
-                )
+                return self._execute_script_argv(script, posargs, raw_command, full_resolved)
 
         # Fallback to old method (for backward compat if executor
         # doesn't have argv)
         return self._execute_alias(raw_command, script)
 
     def _execute_script_argv(
-        self, script: str, posargs: list[str], raw_command: str,
-        full_resolved: str
+        self, script: str, posargs: list[str], raw_command: str, full_resolved: str
     ) -> str:
         """Execute script using argv-based execution (buffered)."""
-        exit_code, stdout, stderr, started_at, duration_ms = (
-            self.executor.run_argv(script, posargs)
-        )
+        exit_code, stdout, stderr, started_at, duration_ms = self.executor.run_argv(script, posargs)
 
         record_event_failed = False
         try:
-            (stdout_truncated, stderr_truncated,
-             stdout_bytes_total, stderr_bytes_total) = (
+            stdout_truncated, stderr_truncated, stdout_bytes_total, stderr_bytes_total = (
                 self.store.record_event(
                     self.panel,
                     raw_command,
@@ -822,8 +751,7 @@ class Kernel:
                 db_name=self.active_db_name,
                 db_path=self.active_db_path,
             )
-            (stdout_truncated, stderr_truncated,
-             stdout_bytes_total, stderr_bytes_total) = (
+            stdout_truncated, stderr_truncated, stdout_bytes_total, stderr_bytes_total = (
                 False,
                 False,
                 0,
@@ -838,17 +766,11 @@ class Kernel:
         reset = ANSI_COLORS["reset"]
 
         if record_event_failed:
-            lines.append(
-                f"{err_color}[ERROR]{reset} "
-                f"failed to record event to database"
-            )
+            lines.append(f"{err_color}[ERROR]{reset} " f"failed to record event to database")
 
         if self.show_run:
             if self.show_stdout:
-                lines.append(
-                    f"{run_color}[RUN]{reset} {raw_command} => "
-                    f"{full_resolved}"
-                )
+                lines.append(f"{run_color}[RUN]{reset} {raw_command} => " f"{full_resolved}")
             else:
                 lines.append(f"{run_color}[RUN]{reset} {raw_command}")
 
@@ -875,8 +797,7 @@ class Kernel:
         return "\n".join(lines)
 
     def _execute_script_argv_streaming(
-        self, script: str, posargs: list[str], raw_command: str,
-        full_resolved: str
+        self, script: str, posargs: list[str], raw_command: str, full_resolved: str
     ) -> str:
         """Execute script using argv-based execution (streaming)."""
         run_color = ANSI_COLORS[TAG_COLORS["RUN"]]
@@ -895,21 +816,15 @@ class Kernel:
 
         if self.show_run and self.output_fn:
             if self.show_stdout:
-                self.output_fn(
-                    f"{run_color}[RUN]{reset} {raw_command} => "
-                    f"{full_resolved}\n"
-                )
+                self.output_fn(f"{run_color}[RUN]{reset} {raw_command} => " f"{full_resolved}\n")
             else:
                 self.output_fn(f"{run_color}[RUN]{reset} {raw_command}\n")
 
-        result = self.executor.run_argv_stream(
-            script, posargs, on_stdout=_out, on_stderr=_err
-        )
+        result = self.executor.run_argv_stream(script, posargs, on_stdout=_out, on_stderr=_err)
 
         record_event_failed = False
         try:
-            (stdout_truncated, stderr_truncated,
-             stdout_bytes_total, stderr_bytes_total) = (
+            stdout_truncated, stderr_truncated, stdout_bytes_total, stderr_bytes_total = (
                 self.store.record_event(
                     self.panel,
                     raw_command,
@@ -930,8 +845,7 @@ class Kernel:
                 db_name=self.active_db_name,
                 db_path=self.active_db_path,
             )
-            (stdout_truncated, stderr_truncated,
-             stdout_bytes_total, stderr_bytes_total) = (
+            stdout_truncated, stderr_truncated, stdout_bytes_total, stderr_bytes_total = (
                 False,
                 False,
                 0,
@@ -944,10 +858,7 @@ class Kernel:
         if record_event_failed:
             err_color = ANSI_COLORS[TAG_COLORS["ERR"]]
             reset = ANSI_COLORS["reset"]
-            lines.append(
-                f"{err_color}[ERROR]{reset} "
-                f"failed to record event to database"
-            )
+            lines.append(f"{err_color}[ERROR]{reset} " f"failed to record event to database")
 
         if self.show_exit:
             lines.append(f"{exit_color}[EXIT]{reset} {result.exit_code}")
@@ -966,8 +877,7 @@ class Kernel:
 
     def _execute_alias(self, raw_command: str, resolved_command: str) -> str:
         # Use TTY mode only if command matches YAML config patterns
-        if (self._can_tty() and
-                self._should_use_tty(resolved_command, raw_command)):
+        if self._can_tty() and self._should_use_tty(resolved_command, raw_command):
             return self._execute_alias_tty(raw_command, resolved_command)
 
         # Prefer streaming if wired (default: capture output)
@@ -975,14 +885,11 @@ class Kernel:
             return self._execute_alias_streaming(raw_command, resolved_command)
 
         # Fallback: buffered (legacy behavior)
-        exit_code, stdout, stderr, started_at, duration_ms = (
-            self.executor.run(resolved_command)
-        )
+        exit_code, stdout, stderr, started_at, duration_ms = self.executor.run(resolved_command)
 
         record_event_failed = False
         try:
-            (stdout_truncated, stderr_truncated,
-             stdout_bytes_total, stderr_bytes_total) = (
+            stdout_truncated, stderr_truncated, stdout_bytes_total, stderr_bytes_total = (
                 self.store.record_event(
                     self.panel,
                     raw_command,
@@ -1004,8 +911,7 @@ class Kernel:
                 db_path=self.active_db_path,
             )
             # Set defaults so we can continue
-            (stdout_truncated, stderr_truncated,
-             stdout_bytes_total, stderr_bytes_total) = (
+            stdout_truncated, stderr_truncated, stdout_bytes_total, stderr_bytes_total = (
                 False,
                 False,
                 0,
@@ -1020,17 +926,11 @@ class Kernel:
         reset = ANSI_COLORS["reset"]
 
         if record_event_failed:
-            lines.append(
-                f"{err_color}[ERROR]{reset} "
-                f"failed to record event to database"
-            )
+            lines.append(f"{err_color}[ERROR]{reset} " f"failed to record event to database")
 
         if self.show_run:
             if self.show_stdout:
-                lines.append(
-                    f"{run_color}[RUN]{reset} {raw_command} => "
-                    f"{resolved_command}"
-                )
+                lines.append(f"{run_color}[RUN]{reset} {raw_command} => " f"{resolved_command}")
             else:
                 lines.append(f"{run_color}[RUN]{reset} {raw_command}")
 
@@ -1056,9 +956,7 @@ class Kernel:
 
         return "\n".join(lines)
 
-    def _execute_alias_streaming(
-        self, raw_command: str, resolved_command: str
-    ) -> str:
+    def _execute_alias_streaming(self, raw_command: str, resolved_command: str) -> str:
         run_color = ANSI_COLORS[TAG_COLORS["RUN"]]
         exit_color = ANSI_COLORS[TAG_COLORS["EXIT"]]
         reset = ANSI_COLORS["reset"]
@@ -1078,22 +976,16 @@ class Kernel:
 
         if self.show_run and self.output_fn:
             if self.show_stdout:
-                self.output_fn(
-                    f"{run_color}[RUN]{reset} {raw_command} => "
-                    f"{resolved_command}\n"
-                )
+                self.output_fn(f"{run_color}[RUN]{reset} {raw_command} => " f"{resolved_command}\n")
             else:
                 self.output_fn(f"{run_color}[RUN]{reset} {raw_command}\n")
 
         # Execute (streaming)
-        result = self.executor.run_stream(
-            resolved_command, on_stdout=_out, on_stderr=_err
-        )
+        result = self.executor.run_stream(resolved_command, on_stdout=_out, on_stderr=_err)
 
         record_event_failed = False
         try:
-            (stdout_truncated, stderr_truncated,
-             stdout_bytes_total, stderr_bytes_total) = (
+            stdout_truncated, stderr_truncated, stdout_bytes_total, stderr_bytes_total = (
                 self.store.record_event(
                     self.panel,
                     raw_command,
@@ -1114,8 +1006,7 @@ class Kernel:
                 db_name=self.active_db_name,
                 db_path=self.active_db_path,
             )
-            (stdout_truncated, stderr_truncated,
-             stdout_bytes_total, stderr_bytes_total) = (
+            stdout_truncated, stderr_truncated, stdout_bytes_total, stderr_bytes_total = (
                 False,
                 False,
                 0,
@@ -1130,10 +1021,7 @@ class Kernel:
         if record_event_failed:
             err_color = ANSI_COLORS[TAG_COLORS["ERR"]]
             reset = ANSI_COLORS["reset"]
-            lines.append(
-                f"{err_color}[ERROR]{reset} "
-                f"failed to record event to database"
-            )
+            lines.append(f"{err_color}[ERROR]{reset} " f"failed to record event to database")
 
         if self.show_exit:
             lines.append(f"{exit_color}[EXIT]{reset} {result.exit_code}")
@@ -1150,9 +1038,7 @@ class Kernel:
 
         return "\n".join(lines)
 
-    def _execute_alias_tty(
-        self, raw_command: str, resolved_command: str
-    ) -> str:
+    def _execute_alias_tty(self, raw_command: str, resolved_command: str) -> str:
         """Execute an alias with full TTY control.
 
         For pagers and interactive tools.
@@ -1165,10 +1051,7 @@ class Kernel:
         lines: list[str] = []
         if self.show_run:
             if self.show_stdout:
-                run_msg = (
-                    f"{run_color}[RUN]{reset} {raw_command} => "
-                    f"{resolved_command}"
-                )
+                run_msg = f"{run_color}[RUN]{reset} {raw_command} => " f"{resolved_command}"
             else:
                 run_msg = f"{run_color}[RUN]{reset} {raw_command}"
             lines.append(run_msg)
@@ -1223,30 +1106,19 @@ class Kernel:
         if record_event_failed:
             err_color = ANSI_COLORS[TAG_COLORS["ERR"]]
             reset = ANSI_COLORS["reset"]
-            exit_lines.append(
-                f"{err_color}[ERROR]{reset} "
-                f"failed to record event to database"
-            )
+            exit_lines.append(f"{err_color}[ERROR]{reset} " f"failed to record event to database")
 
         if self.show_exit:
             exit_lines.append(f"{exit_color}[EXIT]{reset} {result.exit_code}")
 
         return "\n".join(exit_lines)
 
-    def _execute_raw_shell(
-        self, raw_command: str, resolved_command: str
-    ) -> str:
+    def _execute_raw_shell(self, raw_command: str, resolved_command: str) -> str:
         # Check if force_prefix is used (e.g., "!tty ls") and strip it
         exec_cfg = getattr(self.config, "execution", {}) or {}
-        tty_apps = (
-            exec_cfg.get("tty_apps", {})
-            if isinstance(exec_cfg, dict)
-            else {}
-        )
+        tty_apps = exec_cfg.get("tty_apps", {}) if isinstance(exec_cfg, dict) else {}
         force_prefix = (
-            tty_apps.get("force_prefix", "!tty ")
-            if isinstance(tty_apps, dict)
-            else "!tty "
+            tty_apps.get("force_prefix", "!tty ") if isinstance(tty_apps, dict) else "!tty "
         )
 
         # If raw command starts with force_prefix, strip it from
@@ -1258,40 +1130,30 @@ class Kernel:
             # force_prefix is "!tty ", so we need to strip "tty " from resolved
             prefix_without_bang = force_prefix.lstrip("!")
             if actual_resolved.startswith(prefix_without_bang):
-                actual_resolved = actual_resolved[
-                    len(prefix_without_bang):
-                ].lstrip()
+                actual_resolved = actual_resolved[len(prefix_without_bang) :].lstrip()
 
         # Use TTY mode only if command matches YAML config patterns
-        if (self._can_tty() and
-                self._should_use_tty(actual_resolved, raw_command)):
+        if self._can_tty() and self._should_use_tty(actual_resolved, raw_command):
             return self._execute_raw_shell_tty(raw_command, actual_resolved)
 
         # Else prefer PTY (captures output but still provides PTY)
         if self._can_pty():
-            return self._execute_raw_shell_pty(
-                raw_command, actual_resolved
-            )
+            return self._execute_raw_shell_pty(raw_command, actual_resolved)
 
         # Else prefer streaming
         if self._can_stream():
-            return self._execute_raw_shell_streaming(
-                raw_command, actual_resolved
-            )
+            return self._execute_raw_shell_streaming(raw_command, actual_resolved)
 
         # Fallback: buffered (legacy behavior)
         # Pass cwd if shell_fallback is enabled
-        cwd = (
-            self.cwd if self.current_panel_has_shell_fallback() else None
-        )
+        cwd = self.cwd if self.current_panel_has_shell_fallback() else None
         exit_code, stdout, stderr, started_at, duration_ms = self.executor.run(
             actual_resolved, cwd=cwd
         )
 
         record_event_failed = False
         try:
-            (stdout_truncated, stderr_truncated,
-             stdout_bytes_total, stderr_bytes_total) = (
+            stdout_truncated, stderr_truncated, stdout_bytes_total, stderr_bytes_total = (
                 self.store.record_event(
                     self.panel,
                     raw_command,
@@ -1312,8 +1174,7 @@ class Kernel:
                 db_name=self.active_db_name,
                 db_path=self.active_db_path,
             )
-            (stdout_truncated, stderr_truncated,
-             stdout_bytes_total, stderr_bytes_total) = (
+            stdout_truncated, stderr_truncated, stdout_bytes_total, stderr_bytes_total = (
                 False,
                 False,
                 0,
@@ -1328,10 +1189,7 @@ class Kernel:
         reset = ANSI_COLORS["reset"]
 
         if record_event_failed:
-            lines.append(
-                f"{err_color}[ERROR]{reset} "
-                f"failed to record event to database"
-            )
+            lines.append(f"{err_color}[ERROR]{reset} " f"failed to record event to database")
 
         if self.show_run:
             lines.append(f"{run_color}[RUN]{reset} {resolved_command}")
@@ -1358,9 +1216,7 @@ class Kernel:
 
         return "\n".join(lines)
 
-    def _execute_raw_shell_streaming(
-        self, raw_command: str, resolved_command: str
-    ) -> str:
+    def _execute_raw_shell_streaming(self, raw_command: str, resolved_command: str) -> str:
         run_color = ANSI_COLORS[TAG_COLORS["RUN"]]
         exit_color = ANSI_COLORS[TAG_COLORS["EXIT"]]
         reset = ANSI_COLORS["reset"]
@@ -1380,17 +1236,12 @@ class Kernel:
             self.output_fn(msg)
 
         # Pass cwd if shell_fallback is enabled
-        cwd = (
-            self.cwd if self.current_panel_has_shell_fallback() else None
-        )
-        result = self.executor.run_stream(
-            resolved_command, on_stdout=_out, on_stderr=_err, cwd=cwd
-        )
+        cwd = self.cwd if self.current_panel_has_shell_fallback() else None
+        result = self.executor.run_stream(resolved_command, on_stdout=_out, on_stderr=_err, cwd=cwd)
 
         record_event_failed = False
         try:
-            (stdout_truncated, stderr_truncated,
-             stdout_bytes_total, stderr_bytes_total) = (
+            stdout_truncated, stderr_truncated, stdout_bytes_total, stderr_bytes_total = (
                 self.store.record_event(
                     self.panel,
                     raw_command,
@@ -1411,8 +1262,7 @@ class Kernel:
                 db_name=self.active_db_name,
                 db_path=self.active_db_path,
             )
-            (stdout_truncated, stderr_truncated,
-             stdout_bytes_total, stderr_bytes_total) = (
+            stdout_truncated, stderr_truncated, stdout_bytes_total, stderr_bytes_total = (
                 False,
                 False,
                 0,
@@ -1425,10 +1275,7 @@ class Kernel:
         if record_event_failed:
             err_color = ANSI_COLORS[TAG_COLORS["ERR"]]
             reset = ANSI_COLORS["reset"]
-            lines.append(
-                f"{err_color}[ERROR]{reset} "
-                f"failed to record event to database"
-            )
+            lines.append(f"{err_color}[ERROR]{reset} " f"failed to record event to database")
 
         if self.show_exit:
             lines.append(f"{exit_color}[EXIT]{reset} {result.exit_code}")
@@ -1445,9 +1292,7 @@ class Kernel:
 
         return "\n".join(lines)
 
-    def _execute_raw_shell_pty(
-        self, raw_command: str, resolved_command: str
-    ) -> str:
+    def _execute_raw_shell_pty(self, raw_command: str, resolved_command: str) -> str:
         run_color = ANSI_COLORS[TAG_COLORS["RUN"]]
         exit_color = ANSI_COLORS[TAG_COLORS["EXIT"]]
         reset = ANSI_COLORS["reset"]
@@ -1460,19 +1305,14 @@ class Kernel:
             self.output_fn(f"{run_color}[RUN]{reset} {resolved_command}\n")
 
         # Pass cwd if shell_fallback is enabled
-        cwd = (
-            self.cwd if self.current_panel_has_shell_fallback() else None
-        )
-        result = self.executor.run_pty(
-            resolved_command, on_output=_out, cwd=cwd
-        )
+        cwd = self.cwd if self.current_panel_has_shell_fallback() else None
+        result = self.executor.run_pty(resolved_command, on_output=_out, cwd=cwd)
 
         # In PTY mode, result.stdout contains captured text;
         # stderr typically empty
         record_event_failed = False
         try:
-            (stdout_truncated, stderr_truncated,
-             stdout_bytes_total, stderr_bytes_total) = (
+            stdout_truncated, stderr_truncated, stdout_bytes_total, stderr_bytes_total = (
                 self.store.record_event(
                     self.panel,
                     raw_command,
@@ -1493,8 +1333,7 @@ class Kernel:
                 db_name=self.active_db_name,
                 db_path=self.active_db_path,
             )
-            (stdout_truncated, stderr_truncated,
-             stdout_bytes_total, stderr_bytes_total) = (
+            stdout_truncated, stderr_truncated, stdout_bytes_total, stderr_bytes_total = (
                 False,
                 False,
                 0,
@@ -1507,10 +1346,7 @@ class Kernel:
         if record_event_failed:
             err_color = ANSI_COLORS[TAG_COLORS["ERR"]]
             reset = ANSI_COLORS["reset"]
-            lines.append(
-                f"{err_color}[ERROR]{reset} "
-                f"failed to record event to database"
-            )
+            lines.append(f"{err_color}[ERROR]{reset} " f"failed to record event to database")
 
         if self.show_exit:
             lines.append(f"{exit_color}[EXIT]{reset} {result.exit_code}")
@@ -1527,9 +1363,7 @@ class Kernel:
 
         return "\n".join(lines)
 
-    def _execute_raw_shell_tty(
-        self, raw_command: str, resolved_command: str
-    ) -> str:
+    def _execute_raw_shell_tty(self, raw_command: str, resolved_command: str) -> str:
         """Execute raw shell command with full TTY control."""
         run_color = ANSI_COLORS[TAG_COLORS["RUN"]]
         exit_color = ANSI_COLORS[TAG_COLORS["EXIT"]]
@@ -1548,9 +1382,7 @@ class Kernel:
 
         # Execute with full terminal control
         # Pass cwd if shell_fallback is enabled
-        cwd = (
-            self.cwd if self.current_panel_has_shell_fallback() else None
-        )
+        cwd = self.cwd if self.current_panel_has_shell_fallback() else None
         result = self.executor.run_tty(resolved_command, cwd=cwd)
 
         # Record history (with empty stdout/stderr)
@@ -1589,10 +1421,7 @@ class Kernel:
         if record_event_failed:
             err_color = ANSI_COLORS[TAG_COLORS["ERR"]]
             reset = ANSI_COLORS["reset"]
-            exit_lines.append(
-                f"{err_color}[ERROR]{reset} "
-                f"failed to record event to database"
-            )
+            exit_lines.append(f"{err_color}[ERROR]{reset} " f"failed to record event to database")
 
         if self.show_exit:
             exit_lines.append(f"{exit_color}[EXIT]{reset} {result.exit_code}")
@@ -1606,14 +1435,12 @@ class Kernel:
     def _handle_list_aliases(self) -> str:
         aliases = self.store.list_aliases(self.panel)
 
-        hist_color = ANSI_COLORS[TAG_COLORS['HISTORY']]
+        hist_color = ANSI_COLORS[TAG_COLORS["HISTORY"]]
         header_tag = f"{hist_color}[{self.panel}]{ANSI_COLORS['reset']}"
 
         panel_branding = self.branding.get(self.panel, {})
         panel_color_name = panel_branding.get("panel_color", "reset")
-        panel_color = ANSI_COLORS.get(
-            panel_color_name, ANSI_COLORS["reset"]
-        )
+        panel_color = ANSI_COLORS.get(panel_color_name, ANSI_COLORS["reset"])
 
         reset = ANSI_COLORS["reset"]
         dim = ANSI_COLORS["dim"]
@@ -1630,8 +1457,7 @@ class Kernel:
                 name = alias["name"]
                 command = alias["command"]
                 lines.append(
-                    f"  {dash} {panel_color}{name}{reset} {arrow} "
-                    f"{dim}{command}{reset}"
+                    f"  {dash} {panel_color}{name}{reset} {arrow} " f"{dim}{command}{reset}"
                 )
         else:
             lines.append("  (none)")
@@ -1694,10 +1520,7 @@ class Kernel:
                 if name in help_triggers:
                     owner = "help"
 
-            return (
-                f"Cannot create alias '{name}': "
-                f"reserved trigger for '{owner}' command."
-            )
+            return f"Cannot create alias '{name}': " f"reserved trigger for '{owner}' command."
 
         # Store the raw body exactly as entered (preserving quotes,
         # backslashes, etc.)
@@ -1844,9 +1667,7 @@ class Kernel:
 
             try:
                 dt = datetime.fromisoformat(created_at)
-                timestamp_str = (
-                    f"{magenta}{dt.strftime('%Y-%m-%d %H:%M:%S')}{reset}"
-                )
+                timestamp_str = f"{magenta}{dt.strftime('%Y-%m-%d %H:%M:%S')}{reset}"
             except Exception:
                 timestamp_str = f"{magenta}{created_at[:19]}{reset}"
 
@@ -1878,10 +1699,7 @@ class Kernel:
             history = self.store.get_history(self.panel)
             if not history:
                 return "No history for this panel yet."
-            return (
-                f"Invalid index {index}. "
-                f"History has {len(history)} entries."
-            )
+            return f"Invalid index {index}. " f"History has {len(history)} entries."
 
         raw_cmd = detail.get("raw_command", "")
         resolved_cmd = detail.get("resolved_command", "")
@@ -1902,9 +1720,7 @@ class Kernel:
         red = ANSI_COLORS["red"]
         reset = ANSI_COLORS["reset"]
 
-        lines: list[str] = [
-            f"{hist_color}[HISTORY]{reset} #{index} panel {self.panel}"
-        ]
+        lines: list[str] = [f"{hist_color}[HISTORY]{reset} #{index} panel {self.panel}"]
 
         try:
             dt = datetime.fromisoformat(started_at or created_at)
@@ -1928,33 +1744,21 @@ class Kernel:
 
         if stdout_trunc:
             lines.append(f"{yellow}⚠ stdout truncated{reset}")
-            lines.append(
-                f"Stored: {MAX_STDOUT_BYTES:,} of {stdout_total:,} bytes"
-            )
+            lines.append(f"Stored: {MAX_STDOUT_BYTES:,} of {stdout_total:,} bytes")
             lines.append("")
 
         if stderr_trunc:
             lines.append(f"{yellow}⚠ stderr truncated{reset}")
-            lines.append(
-                f"Stored: {MAX_STDERR_BYTES:,} of {stderr_total:,} bytes"
-            )
+            lines.append(f"Stored: {MAX_STDERR_BYTES:,} of {stderr_total:,} bytes")
             lines.append("")
 
         if stdout:
-            lines.append(
-                "--- stdout (truncated) ---"
-                if stdout_trunc
-                else "--- stdout ---"
-            )
+            lines.append("--- stdout (truncated) ---" if stdout_trunc else "--- stdout ---")
             lines.append(stdout.rstrip())
             lines.append("")
 
         if stderr:
-            lines.append(
-                "--- stderr (truncated) ---"
-                if stderr_trunc
-                else "--- stderr ---"
-            )
+            lines.append("--- stderr (truncated) ---" if stderr_trunc else "--- stderr ---")
             lines.append(stderr.rstrip())
             lines.append("")
 
@@ -1994,9 +1798,7 @@ class Kernel:
 
         if setting == "show_run":
             self.show_run = value
-            self.store.set_setting(
-                "show_run", "true" if value else "false"
-            )
+            self.store.set_setting("show_run", "true" if value else "false")
             return f"show_run set to {value}"
         if setting == "show_exit":
             self.show_exit = value
@@ -2012,9 +1814,7 @@ class Kernel:
             return f"force_color set to {value}"
         if setting == "welcome":
             self.welcome = value
-            self.store.set_setting(
-                "welcome", "true" if value else "false"
-            )
+            self.store.set_setting("welcome", "true" if value else "false")
             return f"welcome set to {value}"
 
         return f"Unknown setting: {setting}"
@@ -2028,18 +1828,10 @@ class Kernel:
 
         # Help triggers from YAML: commands.help.triggers
         help_cfg = (
-            self.config.commands.get("help", {})
-            if isinstance(self.config.commands, dict)
-            else {}
+            self.config.commands.get("help", {}) if isinstance(self.config.commands, dict) else {}
         )
-        help_triggers = (
-            help_cfg.get("triggers", [])
-            if isinstance(help_cfg, dict)
-            else []
-        )
-        help_display = (
-            ", ".join(help_triggers) if help_triggers else "?"
-        )
+        help_triggers = help_cfg.get("triggers", []) if isinstance(help_cfg, dict) else []
+        help_display = ", ".join(help_triggers) if help_triggers else "?"
 
         lines.append("Base commands:")
         for cmd_key, cmd_cfg in self.base_commands.items():
@@ -2066,9 +1858,7 @@ class Kernel:
     # REP panel DB commands
     # -----------------------
 
-    def _handle_rep_command(
-        self, cmd: str, parts: list[str], stripped: str
-    ) -> str:
+    def _handle_rep_command(self, cmd: str, parts: list[str], stripped: str) -> str:
         """Handle commands in REP panel (no alias support).
 
         REP panel only supports: DB, USE, WHERE, help commands.
@@ -2111,9 +1901,7 @@ class Kernel:
         lines.append("REP commands:")
         lines.append("  DB              list available databases")
         lines.append("  USE <id|name>   switch active database")
-        lines.append(
-            "  WHERE           show active database path and source"
-        )
+        lines.append("  WHERE           show active database path and source")
         lines.append("  INFO            show active database metadata")
         return "\n".join(lines)
 
@@ -2156,11 +1944,7 @@ class Kernel:
                 "source": "core",
                 "key": "core",
                 "path": core_path,
-                "active": (
-                    (self.active_db_path == core_path)
-                    if self.active_db_path
-                    else False
-                ),
+                "active": ((self.active_db_path == core_path) if self.active_db_path else False),
             }
         )
 
@@ -2236,10 +2020,7 @@ class Kernel:
             elif len(matches) > 1:
                 # Ambiguous - multiple targets with same name
                 match_ids = [str(t["id"]) for t in matches]
-                return (
-                    f"Ambiguous DB target name: {arg}. "
-                    f"Matches: {', '.join(match_ids)}"
-                )
+                return f"Ambiguous DB target name: {arg}. " f"Matches: {', '.join(match_ids)}"
             else:
                 selected = matches[0]
 

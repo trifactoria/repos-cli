@@ -666,12 +666,14 @@ def test_alias_continuation_with_trailing_backslash(monkeypatch: pytest.MonkeyPa
     monkeypatch.setattr(k, "prompt", lambda: "G>")
 
     # Simulate user input with continuation
-    ui = FakeUI(inputs=[
-        'G',                       # Switch to Git panel (supports aliases)
-        'A e echo "this is a \\',  # Trailing backslash
-        'test"',                   # Continuation line
-        "ZZ"                       # Exit
-    ])
+    ui = FakeUI(
+        inputs=[
+            "G",  # Switch to Git panel (supports aliases)
+            'A e echo "this is a \\',  # Trailing backslash
+            'test"',  # Continuation line
+            "ZZ",  # Exit
+        ]
+    )
 
     cli.run_repl(k, ui=ui)
 
@@ -695,12 +697,14 @@ def test_alias_continuation_with_unbalanced_quotes(monkeypatch: pytest.MonkeyPat
     k.running = True
     monkeypatch.setattr(k, "prompt", lambda: "G>")
 
-    ui = FakeUI(inputs=[
-        'G',                       # Switch to Git panel (supports aliases)
-        'A e printf "%s\\n" "a',  # Unbalanced quote
-        'b"',                      # Closing quote
-        "ZZ"                       # Exit
-    ])
+    ui = FakeUI(
+        inputs=[
+            "G",  # Switch to Git panel (supports aliases)
+            'A e printf "%s\\n" "a',  # Unbalanced quote
+            'b"',  # Closing quote
+            "ZZ",  # Exit
+        ]
+    )
 
     cli.run_repl(k, ui=ui)
 
@@ -723,11 +727,13 @@ def test_alias_no_continuation_when_complete(monkeypatch: pytest.MonkeyPatch) ->
     k.running = True
     monkeypatch.setattr(k, "prompt", lambda: "G>")
 
-    ui = FakeUI(inputs=[
-        'G',              # Switch to Git panel (supports aliases)
-        'A e echo "ok"',  # Complete command
-        "ZZ"              # Exit
-    ])
+    ui = FakeUI(
+        inputs=[
+            "G",  # Switch to Git panel (supports aliases)
+            'A e echo "ok"',  # Complete command
+            "ZZ",  # Exit
+        ]
+    )
 
     cli.run_repl(k, ui=ui)
 
@@ -767,7 +773,7 @@ def test_alias_continuation_abort_with_ctrl_d(monkeypatch: pytest.MonkeyPatch) -
 
             if self.read_count == 1:
                 # First read: switch to G panel
-                return 'G'
+                return "G"
             elif self.read_count == 2:
                 # Second read: incomplete alias command
                 return 'A e echo "incomplete'

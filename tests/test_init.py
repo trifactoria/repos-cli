@@ -65,7 +65,9 @@ def core_db_path(repos_data_home: Path) -> Path:
     return repos_data_home / "repos" / "core.db"
 
 
-def project_db_path(repos_data_home: Path, project_id: str, project_name: str | None = None) -> Path:
+def project_db_path(
+    repos_data_home: Path, project_id: str, project_name: str | None = None
+) -> Path:
     """Generate project DB path matching the main config module."""
     from repos_cli.config import make_project_db_filename
 

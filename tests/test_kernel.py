@@ -3,6 +3,7 @@
 Kernel tests with dependency injection.
 Kernel should only handle routing/formatting - actual work delegated to services.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -167,7 +168,6 @@ class FakeExecutor:
         # Simulate what would happen: script with args substituted
         if posargs:
             # Simulate $1, $2, etc. substitution for test compatibility
-            import re
 
             result_script = script
             for i, arg in enumerate(posargs, 1):

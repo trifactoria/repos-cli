@@ -50,7 +50,7 @@ def _extract_alias_body(line: str, kernel: Kernel) -> str | None:
         return None
 
     # Extract the first token (trigger) without using shlex
-    space_idx = stripped.find(' ')
+    space_idx = stripped.find(" ")
     if space_idx <= 0:
         return None
 
@@ -68,7 +68,7 @@ def _extract_alias_body(line: str, kernel: Kernel) -> str | None:
 
     name_end = 0
     for i, ch in enumerate(after_trigger):
-        if ch.isalnum() or ch == '_':
+        if ch.isalnum() or ch == "_":
             name_end = i + 1
         else:
             break
@@ -112,9 +112,11 @@ def run_repl(
                     try:
                         # Read continuation line
                         cont_prompt = (
-                            config.ANSI_COLORS["cyan"] + "..." +
-                            config.ANSI_COLORS["pink"] + ">" +
-                            config.ANSI_COLORS["reset"]
+                            config.ANSI_COLORS["cyan"]
+                            + "..."
+                            + config.ANSI_COLORS["pink"]
+                            + ">"
+                            + config.ANSI_COLORS["reset"]
                         )
                         if ui is not None:
                             continuation = ui.read(cont_prompt)
@@ -141,7 +143,7 @@ def run_repl(
                     stripped = original_line.strip()
 
                     # Find the trigger (first token)
-                    space_idx = stripped.find(' ')
+                    space_idx = stripped.find(" ")
                     if space_idx > 0:
                         trigger = stripped[:space_idx]
                         after_trigger = stripped[space_idx:].lstrip()
@@ -149,7 +151,7 @@ def run_repl(
                         # Find name - alphanumeric/underscore
                         name_end = 0
                         for i, ch in enumerate(after_trigger):
-                            if ch.isalnum() or ch == '_':
+                            if ch.isalnum() or ch == "_":
                                 name_end = i + 1
                             else:
                                 break
@@ -187,10 +189,7 @@ def run_repl(
                     db_path=kernel.active_db_path,
                 )
                 # Show error to user
-                error_msg = (
-                    f"[ERROR] Unhandled exception: "
-                    f"{type(e).__name__}: {e}"
-                )
+                error_msg = f"[ERROR] Unhandled exception: " f"{type(e).__name__}: {e}"
                 if ui is not None:
                     ui.write(error_msg)
                 else:

@@ -18,11 +18,7 @@ from enum import Enum, auto
 from typing import Any
 
 
-def format_table(
-    headers: list[str],
-    rows: list[list[Any]],
-    title: str = ""
-) -> str:
+def format_table(headers: list[str], rows: list[list[Any]], title: str = "") -> str:
     """
     Format data as a simple text table without external dependencies.
 
@@ -90,6 +86,7 @@ def shell_quote(s: str) -> str:
 
 class LexerState(Enum):
     """States for quote-aware lexer."""
+
     NORMAL = auto()
     SINGLE_QUOTE = auto()
     DOUBLE_QUOTE = auto()
@@ -99,6 +96,7 @@ class LexerState(Enum):
 @dataclass
 class ScriptSegment:
     """A segment of a script - either literal shell or an alias call."""
+
     type: str  # "literal" or "alias"
     content: str  # For literal: shell script; for alias: alias name
     args: list[str]  # For alias: parsed arguments; for literal: empty
@@ -144,7 +142,7 @@ def parse_alias_script(script: str) -> list[ScriptSegment]:
             continue
 
         if state == LexerState.NORMAL:
-            if ch == '\\':
+            if ch == "\\":
                 current_segment.append(ch)
                 state = LexerState.ESCAPE
                 i += 1
@@ -161,51 +159,42 @@ def parse_alias_script(script: str) -> list[ScriptSegment]:
                 i += 1
                 at_command_boundary = False
                 continue
-            elif ch in (';', '\n'):
+            elif ch in (";", "\n"):
                 # Command separator - flush current segment, skip delimiter
                 if current_segment:
-                    literal_text = ''.join(current_segment).strip()
+                    literal_text = "".join(current_segment).strip()
                     if literal_text:
                         segments.append(
-                            ScriptSegment(
-                                type="literal",
-                                content=literal_text,
-                                args=[]
-                            )
+                            ScriptSegment(type="literal", content=literal_text, args=[])
                         )
                     current_segment = []
                 # Skip the delimiter - do NOT add it to any segment
                 at_command_boundary = True
                 i += 1
                 continue
-            elif ch in (' ', '\t'):
+            elif ch in (" ", "\t"):
                 # Whitespace - add to current segment if not at boundary
                 if not at_command_boundary or current_segment:
                     current_segment.append(ch)
                 i += 1
                 continue
-            elif ch == '@' and at_command_boundary:
+            elif ch == "@" and at_command_boundary:
                 # Potential alias call - check if it's @name
                 # Save current segment as literal if non-empty
                 if current_segment:
-                    literal_text = ''.join(current_segment).strip()
+                    literal_text = "".join(current_segment).strip()
                     if literal_text:
                         segments.append(
-                            ScriptSegment(
-                                type="literal",
-                                content=literal_text,
-                                args=[]
-                            )
+                            ScriptSegment(type="literal", content=literal_text, args=[])
                         )
                     current_segment = []
 
                 # Parse @alias_name
                 j = i + 1
-                while (j < len(script) and
-                       (script[j].isalnum() or script[j] == '_')):
+                while j < len(script) and (script[j].isalnum() or script[j] == "_"):
                     j += 1
 
-                alias_name = script[i+1:j]
+                alias_name = script[i + 1 : j]
 
                 if not alias_name:
                     # Just @ by itself - treat as literal
@@ -215,7 +204,7 @@ def parse_alias_script(script: str) -> list[ScriptSegment]:
                     continue
 
                 # Skip whitespace after alias name
-                while j < len(script) and script[j] in (' ', '\t'):
+                while j < len(script) and script[j] in (" ", "\t"):
                     j += 1
 
                 # Collect arguments, watch for @name patterns
@@ -224,15 +213,15 @@ def parse_alias_script(script: str) -> list[ScriptSegment]:
                 at_token_boundary = True
 
                 while j < len(script):
-                    if script[j] in (';', '\n'):
+                    if script[j] in (";", "\n"):
                         # Hit a separator, stop collecting args
                         break
-                    elif script[j] in (' ', '\t'):
+                    elif script[j] in (" ", "\t"):
                         # Whitespace marks token boundary
                         at_token_boundary = True
                         j += 1
                         continue
-                    elif script[j] == '@' and at_token_boundary:
+                    elif script[j] == "@" and at_token_boundary:
                         # @a @b shorthand case
                         # Stop collecting, handle @name next iteration
                         break
@@ -250,27 +239,21 @@ def parse_alias_script(script: str) -> list[ScriptSegment]:
                         # Shlex parse error - treat whole as literal
                         current_segment.append(script[i:j])
                         i = j
-                        boundary = script[j-1] in (';', '\n')
+                        boundary = script[j - 1] in (";", "\n")
                         at_command_boundary = boundary if j > i else False
                         continue
                 else:
                     parsed_args = []
 
                 # Add alias segment
-                segments.append(
-                    ScriptSegment(
-                        type="alias",
-                        content=alias_name,
-                        args=parsed_args
-                    )
-                )
+                segments.append(ScriptSegment(type="alias", content=alias_name, args=parsed_args))
 
                 i = j
                 # Check if we stopped at a delimiter or @name
                 if i < len(script):
-                    if script[i] in (';', '\n'):
+                    if script[i] in (";", "\n"):
                         at_command_boundary = True
-                    elif script[i] == '@':
+                    elif script[i] == "@":
                         at_command_boundary = True
                     else:
                         at_command_boundary = False
@@ -292,7 +275,7 @@ def parse_alias_script(script: str) -> list[ScriptSegment]:
             continue
 
         elif state == LexerState.DOUBLE_QUOTE:
-            if ch == '\\':
+            if ch == "\\":
                 current_segment.append(ch)
                 # In double quotes, backslash escapes special chars
                 if i + 1 < len(script):
@@ -308,22 +291,14 @@ def parse_alias_script(script: str) -> list[ScriptSegment]:
 
     # Flush remaining segment
     if current_segment:
-        literal_text = ''.join(current_segment).strip()
+        literal_text = "".join(current_segment).strip()
         if literal_text:
-            segments.append(
-                ScriptSegment(
-                    type="literal",
-                    content=literal_text,
-                    args=[]
-                )
-            )
+            segments.append(ScriptSegment(type="literal", content=literal_text, args=[]))
 
     return segments
 
 
-def extract_kwargs_and_posargs(
-    args: list[str]
-) -> tuple[dict[str, str], list[str]]:
+def extract_kwargs_and_posargs(args: list[str]) -> tuple[dict[str, str], list[str]]:
     """Extract kwargs (key=value) and positional args from list.
 
     Args:
@@ -335,7 +310,7 @@ def extract_kwargs_and_posargs(
     kwargs: dict[str, str] = {}
     posargs: list[str] = []
 
-    kwarg_pattern = re.compile(r'^([A-Za-z_][A-Za-z0-9_]*)=(.*)$')
+    kwarg_pattern = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)=(.*)$")
 
     for arg in args:
         match = kwarg_pattern.match(arg)
@@ -376,7 +351,7 @@ def is_quote_balanced(text: str) -> bool:
             continue
 
         if state == LexerState.NORMAL:
-            if ch == '\\':
+            if ch == "\\":
                 state = LexerState.ESCAPE
             elif ch == "'":
                 state = LexerState.SINGLE_QUOTE
@@ -390,7 +365,7 @@ def is_quote_balanced(text: str) -> bool:
             i += 1
 
         elif state == LexerState.DOUBLE_QUOTE:
-            if ch == '\\':
+            if ch == "\\":
                 # In double quotes, backslash escapes some chars
                 if i + 1 < len(text):
                     i += 2  # Skip the escaped char
@@ -435,7 +410,7 @@ def has_trailing_backslash(text: str) -> bool:
             continue
 
         if state == LexerState.NORMAL:
-            if ch == '\\':
+            if ch == "\\":
                 state = LexerState.ESCAPE
             elif ch == "'":
                 state = LexerState.SINGLE_QUOTE
@@ -449,7 +424,7 @@ def has_trailing_backslash(text: str) -> bool:
             i += 1
 
         elif state == LexerState.DOUBLE_QUOTE:
-            if ch == '\\':
+            if ch == "\\":
                 # In double quotes, backslash escapes some chars
                 if i + 1 < len(text):
                     i += 2  # Skip the escaped char
@@ -491,10 +466,7 @@ def is_shell_input_incomplete(text: str) -> bool:
     return False
 
 
-def substitute_placeholders(
-    script: str,
-    kwargs: dict[str, str]
-) -> tuple[str, list[str]]:
+def substitute_placeholders(script: str, kwargs: dict[str, str]) -> tuple[str, list[str]]:
     """Substitute {placeholder} with shell-safe values from kwargs.
 
     Raises an error if placeholders are missing.
@@ -510,7 +482,7 @@ def substitute_placeholders(
         ValueError: If required placeholders are missing
     """
     # Find all placeholders
-    placeholder_pattern = re.compile(r'\{([A-Za-z_][A-Za-z0-9_]*)\}')
+    placeholder_pattern = re.compile(r"\{([A-Za-z_][A-Za-z0-9_]*)\}")
     placeholders = placeholder_pattern.findall(script)
 
     if not placeholders:
@@ -520,11 +492,8 @@ def substitute_placeholders(
     missing = [p for p in placeholders if p not in kwargs]
     if missing:
         provided_keys = list(kwargs.keys())
-        prov = ', '.join(provided_keys) if provided_keys else 'none'
-        error_msg = (
-            f"Missing required placeholders: {', '.join(missing)}. "
-            f"Provided: {prov}"
-        )
+        prov = ", ".join(provided_keys) if provided_keys else "none"
+        error_msg = f"Missing required placeholders: {', '.join(missing)}. " f"Provided: {prov}"
         raise ValueError(error_msg)
 
     # Substitute all placeholders with shell-safe quoted values
@@ -532,6 +501,6 @@ def substitute_placeholders(
     for placeholder in set(placeholders):
         value = kwargs[placeholder]
         safe_value = shell_quote(value)
-        result = result.replace(f'{{{placeholder}}}', safe_value)
+        result = result.replace(f"{{{placeholder}}}", safe_value)
 
     return result, []

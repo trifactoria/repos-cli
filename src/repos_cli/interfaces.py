@@ -61,9 +61,7 @@ class RepoStore(Protocol):
         """Get compact execution history for a panel, newest first."""
         ...
 
-    def get_history_detail(
-        self, panel: str, index: int
-    ) -> dict[str, Any] | None:
+    def get_history_detail(self, panel: str, index: int) -> dict[str, Any] | None:
         """Get detailed execution history entry by 1-indexed position."""
         ...
 

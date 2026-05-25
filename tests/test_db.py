@@ -79,8 +79,7 @@ def test_migration_adds_expected_events_columns(repos_data_home: Path) -> None:
     # Create legacy minimal schema (missing newer columns)
     conn = sqlite3.connect(str(core))
     try:
-        conn.execute(
-            """
+        conn.execute("""
             CREATE TABLE IF NOT EXISTS events (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 panel TEXT NOT NULL,
@@ -89,8 +88,7 @@ def test_migration_adds_expected_events_columns(repos_data_home: Path) -> None:
                 exit_code INTEGER NOT NULL,
                 created_at TEXT NOT NULL
             )
-            """
-        )
+            """)
         conn.commit()
     finally:
         conn.close()
@@ -125,8 +123,7 @@ def test_projects_migration_upgrades_legacy_table_missing_id(
     # Legacy projects table: no `id` column
     conn = sqlite3.connect(str(core))
     try:
-        conn.execute(
-            """
+        conn.execute("""
             CREATE TABLE IF NOT EXISTS projects (
                 project_id TEXT UNIQUE NOT NULL,
                 project_name TEXT NOT NULL,
@@ -136,8 +133,7 @@ def test_projects_migration_upgrades_legacy_table_missing_id(
                 created_at TEXT NOT NULL,
                 last_used_at TEXT NOT NULL
             )
-            """
-        )
+            """)
         conn.commit()
     finally:
         conn.close()
@@ -163,8 +159,7 @@ def test_projects_migration_upgrades_store_style_projects_table(
     # Store-style projects table (wrong schema for core registry)
     conn = sqlite3.connect(str(core))
     try:
-        conn.execute(
-            """
+        conn.execute("""
             CREATE TABLE IF NOT EXISTS projects (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
@@ -173,8 +168,7 @@ def test_projects_migration_upgrades_store_style_projects_table(
                 updated_at TEXT NOT NULL,
                 UNIQUE(path)
             )
-            """
-        )
+            """)
         conn.commit()
     finally:
         conn.close()

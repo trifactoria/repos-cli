@@ -80,17 +80,10 @@ def ensure_active_db(cwd: Path) -> Path:
     project_id = project_cfg["project_id"]
     project_name = project_cfg.get("project_name")
 
-    project_data_home = config.resolve_repos_data_home(
-        project_cfg, project_root
-    )
-    data_root = (
-        project_data_home if project_data_home
-        else config.get_data_root()
-    )
+    project_data_home = config.resolve_repos_data_home(project_cfg, project_root)
+    data_root = project_data_home if project_data_home else config.get_data_root()
 
-    project_db_path = config.project_db_path(
-        data_root, project_id, project_name
-    )
+    project_db_path = config.project_db_path(data_root, project_id, project_name)
     db.ensure_schema(project_db_path)
 
     core_db_path = ensure_core_db(cwd)
@@ -115,12 +108,9 @@ def init_project(
 
     repos_file = cwd / ".repos"
     if repos_file.exists():
+        interviewer.write("An existing .repos file was found in this directory.")
         interviewer.write(
-            "An existing .repos file was found in this directory."
-        )
-        interviewer.write(
-            "Refusing to overwrite. If you intend to re-init, "
-            "remove .repos first.\n"
+            "Refusing to overwrite. If you intend to re-init, " "remove .repos first.\n"
         )
         raise Exception("Project already initialized (.repos exists)")
 
@@ -144,14 +134,9 @@ def init_project(
     available = _discover_profiles()
 
     if mode == "minimal":
-        interviewer.write(
-            "\nYou can optionally include base panels and aliases."
-        )
+        interviewer.write("\nYou can optionally include base panels and aliases.")
         interviewer.write("Each panel is defined by a YAML profile.\n")
-        interviewer.write(
-            "For each panel, the definition will be shown before "
-            "you choose.\n"
-        )
+        interviewer.write("For each panel, the definition will be shown before " "you choose.\n")
 
         for profile_name in available:
             profile_data = _load_profile(profile_name)
@@ -162,19 +147,13 @@ def init_project(
             interviewer.write(preview)
 
             ans = (
-                interviewer.ask(
-                    f"Would you like to include {profile_name} "
-                    f"aliases? [y/N]: "
-                )
+                interviewer.ask(f"Would you like to include {profile_name} " f"aliases? [y/N]: ")
                 .strip()
                 .lower()
             )
             if ans in {"y", "yes"}:
                 included_profiles.append(profile_name)
-                interviewer.write(
-                    f"\n✔ {profile_name.capitalize()} "
-                    f"will be included\n"
-                )
+                interviewer.write(f"\n✔ {profile_name.capitalize()} " f"will be included\n")
             else:
                 skipped_profiles.append(profile_name)
                 interviewer.write(f"\n✘ {profile_name.capitalize()} skipped\n")
@@ -184,9 +163,7 @@ def init_project(
         skipped_profiles = list(available)
 
     data_root = config.get_data_root()
-    project_db_path = config.project_db_path(
-        data_root, project_id, project_name
-    )
+    project_db_path = config.project_db_path(data_root, project_id, project_name)
 
     summary = _build_initialization_summary(
         project_name=project_name,
@@ -200,11 +177,7 @@ def init_project(
     )
     interviewer.write("\n" + summary + "\n")
 
-    confirm = (
-        interviewer.ask("Proceed with initialization? [Y/n]: ")
-        .strip()
-        .lower()
-    )
+    confirm = interviewer.ask("Proceed with initialization? [Y/n]: ").strip().lower()
     if confirm in {"n", "no"}:
         interviewer.write("\nInitialization aborted.\n")
         raise Exception("Initialization aborted by user")
@@ -366,8 +339,7 @@ def _get_reserved_triggers() -> set[str]:
     reserved = set()
 
     # Collect all base command triggers from config
-    if (hasattr(system_config, "commands") and
-            isinstance(system_config.commands, dict)):
+    if hasattr(system_config, "commands") and isinstance(system_config.commands, dict):
         base_cmds = system_config.commands.get("base", {})
         if isinstance(base_cmds, dict):
             for _cmd_name, cmd_cfg in base_cmds.items():
@@ -408,15 +380,14 @@ def _apply_profiles(db_path: Path, profile_names: list[str]) -> None:
             for alias_def in aliases:
                 name = alias_def.get("name")
                 cmd = alias_def.get("command")
-                if not (isinstance(name, str) and name and
-                        isinstance(cmd, str) and cmd):
+                if not (isinstance(name, str) and name and isinstance(cmd, str) and cmd):
                     continue
 
                 # Skip reserved triggers and warn
                 if name in reserved:
                     print(
                         f'Skipping alias "{name}" in panel {panel}: '
-                        f'reserved base command trigger.'
+                        f"reserved base command trigger."
                     )
                     continue
 
